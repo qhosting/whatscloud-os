@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsCloud LeadScrapper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Poppins', 'sans-serif'],
+            },
+            colors: {
+              wc: {
+                purple: '#7C3AED', // Logo Left
+                blue: '#0EA5E9',   // Logo Middle (Cloud)
+                green: '#10B981',  // Logo Right
+                dark: '#0F172A',
+                light: '#F8FAFC',
+              }
+            },
+            backgroundImage: {
+              'wc-gradient': 'linear-gradient(to right, #7C3AED, #0EA5E9, #10B981)',
+              'wc-gradient-hover': 'linear-gradient(to right, #6D28D9, #0284C7, #059669)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8fafc;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
