@@ -1,298 +1,192 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserRole, ACCProfile } from '../types';
+import { PROD_CONFIG } from '../services/config';
+import { storageService } from '../services/storageService';
+// Added CreditCard to imports from lucide-react to fix error on line 186
 import { 
-  Shield, 
-  Server, 
-  Users, 
-  Settings, 
-  Activity, 
-  Zap, 
-  Database,
-  RefreshCw,
-  Lock,
-  Globe,
-  CreditCard,
-  ToggleLeft,
-  ToggleRight,
-  Sliders
+  Shield, Server, Users, Activity, Zap, Database, RefreshCw, Terminal, Cpu, Search, Trash2, TrendingUp, AlertCircle, CreditCard
 } from 'lucide-react';
 
 interface AdminPanelProps {
   onSyncACC: () => void;
 }
 
-// Mock Data for Admin Panel
-const MOCK_USERS: Partial<ACCProfile>[] = [
-  { userId: 'wc_user_8821', name: 'Carlos Emprendedor', role: 'ACCOUNT_OWNER', credits: 150, subscriptionStatus: 'active' },
-  { userId: 'wc_agent_007', name: 'Agente Smith', role: 'ACCOUNT_AGENT', credits: 0, subscriptionStatus: 'active' },
-  { userId: 'wc_admin_1337', name: 'Desarrollador WhatsCloud', role: 'SUPER_ADMIN', credits: 99999, subscriptionStatus: 'active' },
-];
-
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onSyncACC }) => {
-  const [activeTab, setActiveTab] = useState<'hub' | 'users' | 'roles'>('hub');
-  const [accStatus, setAccStatus] = useState<'connected' | 'syncing' | 'error'>('connected');
-  const [users, setUsers] = useState(MOCK_USERS);
-  
-  // Expanded Granular Config
-  const [roleConfig, setRoleConfig] = useState<Record<string, Record<string, any>>>({
-      'ACCOUNT_OWNER': { 
-          'can_scrape': true, 
-          'can_export': true, 
-          'can_manage_team': true, 
-          'can_configure_bot': true,
-          'max_daily_leads': 500,
-          'export_formats': 'JSON, CSV, PDF'
-      },
-      'ACCOUNT_AGENT': { 
-          'can_scrape': true, 
-          'can_export': false, 
-          'can_manage_team': false, 
-          'can_configure_bot': false,
-          'max_daily_leads': 50,
-          'export_formats': 'None'
-      },
-      'PLATFORM_SUPPORT': {
-          'can_scrape': true,
-          'can_export': false,
-          'can_manage_team': false,
-          'can_configure_bot': true,
-          'max_daily_leads': 1000,
-          'export_formats': 'JSON'
-      }
-  });
+  const [activeTab, setActiveTab] = useState<'hub' | 'users' | 'infra' | 'logs'>('hub');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState({ online: 1240, leads: 8502, latency: '4ms' });
 
-  const handleManualSync = () => {
-      setAccStatus('syncing');
-      setTimeout(() => {
-          setAccStatus('connected');
-          onSyncACC(); // Call sync prop
-      }, 2000);
+  useEffect(() => {
+    const loadLogs = () => {
+      const storedLogs = JSON.parse(localStorage.getItem('db_system_logs') || '[]');
+      setLogs(storedLogs);
+    };
+    loadLogs();
+    const interval = setInterval(loadLogs, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleClearLogs = () => {
+    localStorage.setItem('db_system_logs', '[]');
+    setLogs([]);
   };
 
-  const togglePermission = (role: string, perm: string) => {
-      setRoleConfig(prev => ({
-          ...prev,
-          [role]: {
-              ...prev[role],
-              [perm]: !prev[role][perm]
-          }
-      }));
-  };
-
-  const updateNumericSetting = (role: string, setting: string, value: number) => {
-     setRoleConfig(prev => ({
-          ...prev,
-          [role]: {
-              ...prev[role],
-              [setting]: value
-          }
-      }));
+  const adjustCredits = async (userId: string, amount: number) => {
+    console.log(`[GOD MODE] Ajustando créditos para ${userId}: ${amount}`);
+    // En producción esto enviaría un query a PGSQL 16
+    alert(`Ajuste de ${amount} créditos procesado para el cluster.`);
   };
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500 pb-20">
-      
-      {/* GOD MODE HEADER */}
-      <div className="bg-slate-950 text-white p-8 rounded-3xl shadow-2xl border border-slate-800 relative overflow-hidden mb-8">
-         <div className="absolute top-0 right-0 p-8 opacity-10">
-             <Shield size={200} />
-         </div>
+      <div className="bg-slate-950 text-white p-8 rounded-3xl shadow-2xl border border-slate-800 mb-8 relative overflow-hidden">
+         <div className="absolute top-0 right-0 p-8 opacity-10"><Shield size={200} /></div>
          <div className="relative z-10">
              <div className="flex items-center gap-3 mb-2">
                  <div className="bg-yellow-500/20 text-yellow-400 p-2 rounded-lg border border-yellow-500/50">
                      <Zap size={20} fill="currentColor" />
                  </div>
-                 <span className="text-yellow-500 font-bold tracking-widest text-xs uppercase">Protocol 8888 Active</span>
+                 <span className="text-yellow-500 font-bold tracking-widest text-xs uppercase">WhatsCloud.MX God Mode</span>
              </div>
-             <h1 className="text-4xl font-bold mb-2">Admin God Mode</h1>
-             <p className="text-slate-400 max-w-2xl">
-                 Panel de control omnisciente para la gestión del ecosistema WhatsCloud y la conexión neuronal con Aurum Control Center.
-             </p>
+             <h1 className="text-4xl font-bold mb-2 tracking-tighter">Panel de Control Supremo</h1>
          </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* SIDEBAR */}
           <div className="w-full lg:w-64 space-y-2">
-              <button 
-                onClick={() => setActiveTab('hub')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'hub' ? 'bg-white shadow-md text-slate-900' : 'text-slate-500 hover:bg-white/50'}`}
-              >
-                  <Server size={18} /> ACC Hub Status
-              </button>
-              <button 
-                onClick={() => setActiveTab('users')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'users' ? 'bg-white shadow-md text-slate-900' : 'text-slate-500 hover:bg-white/50'}`}
-              >
-                  <Users size={18} /> User Management
-              </button>
-              <button 
-                onClick={() => setActiveTab('roles')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'roles' ? 'bg-white shadow-md text-slate-900' : 'text-slate-500 hover:bg-white/50'}`}
-              >
-                  <Sliders size={18} /> Role Preferences
-              </button>
+              <TabButton active={activeTab === 'hub'} onClick={() => setActiveTab('hub')} icon={<Server size={18} />} label="Estado Global" />
+              <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Gestión Usuarios" />
+              <TabButton active={activeTab === 'infra'} onClick={() => setActiveTab('infra')} icon={<Terminal size={18} />} label="Infraestructura" />
+              <TabButton active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Activity size={18} />} label="Logs Sistema" />
           </div>
 
-          {/* CONTENT AREA */}
-          <div className="flex-1">
-              
-              {/* TAB: ACC HUB */}
+          <div className="flex-1 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
               {activeTab === 'hub' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                              <Database size={18} className="text-wc-blue" /> Estado de Conexión
-                          </h3>
-                          <div className="flex flex-col items-center justify-center py-8">
-                              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all ${accStatus === 'syncing' ? 'bg-yellow-100 text-yellow-600 animate-pulse' : 'bg-emerald-100 text-emerald-600'}`}>
-                                  <Activity size={48} />
-                              </div>
-                              <h4 className="text-2xl font-bold text-slate-800">
-                                  {accStatus === 'connected' ? 'SYSTEM ONLINE' : 'SYNCING...'}
-                              </h4>
-                              <p className="text-slate-500 text-sm mt-1">Aurum Control Center v4.2.0</p>
-                              
-                              <button 
-                                onClick={handleManualSync}
-                                disabled={accStatus === 'syncing'}
-                                className="mt-6 px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors"
-                              >
-                                  <RefreshCw size={14} className={accStatus === 'syncing' ? 'animate-spin' : ''} />
-                                  Forzar Sincronización
-                              </button>
-                          </div>
+                  <div className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <StatCard icon={<Users className="text-blue-500" />} label="Online" value={stats.online.toString()} />
+                          <StatCard icon={<Database className="text-purple-500" />} label="Total Leads" value={stats.leads.toString()} />
+                          <StatCard icon={<Zap className="text-yellow-500" />} label="Latencia" value={stats.latency} />
                       </div>
-
-                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                              <Globe size={18} className="text-purple-500" /> Métricas Globales (Realtime)
-                          </h3>
+                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                          <h3 className="font-bold text-slate-800 mb-4">Salud del Cluster</h3>
                           <div className="space-y-4">
-                              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="text-sm text-slate-500">Usuarios Activos</span>
-                                  <span className="font-mono font-bold text-slate-800">1,240</span>
-                              </div>
-                              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="text-sm text-slate-500">Leads Extraídos (Hoy)</span>
-                                  <span className="font-mono font-bold text-slate-800">8,502</span>
-                              </div>
-                              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="text-sm text-slate-500">Créditos Consumidos</span>
-                                  <span className="font-mono font-bold text-slate-800">12,050</span>
-                              </div>
-                              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="text-sm text-slate-500">Latencia API Gemini</span>
-                                  <span className="font-mono font-bold text-emerald-600">42ms</span>
-                              </div>
+                              <HealthItem label="PostgreSQL 16 Engine" status="Healthy" />
+                              <HealthItem label="Redis Session Cache" status="Healthy" />
+                              <HealthItem label="N8N Worker Nodes" status="Scaling" />
                           </div>
                       </div>
                   </div>
               )}
 
-              {/* TAB: USERS */}
               {activeTab === 'users' && (
-                  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                      <table className="w-full text-left text-sm">
-                          <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
-                              <tr>
-                                  <th className="px-6 py-4">Usuario</th>
-                                  <th className="px-6 py-4">Rol</th>
-                                  <th className="px-6 py-4">Créditos</th>
-                                  <th className="px-6 py-4">Status</th>
-                                  <th className="px-6 py-4">Acciones</th>
-                              </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                              {users.map(user => (
-                                  <tr key={user.userId} className="hover:bg-slate-50/50 transition-colors">
-                                      <td className="px-6 py-4">
-                                          <div className="font-bold text-slate-800">{user.name}</div>
-                                          <div className="text-xs text-slate-400 font-mono">{user.userId}</div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${user.role === 'SUPER_ADMIN' ? 'bg-black text-yellow-400 border-yellow-500' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                                              {user.role}
-                                          </span>
-                                      </td>
-                                      <td className="px-6 py-4 font-mono text-slate-600">
-                                          <div className="flex items-center gap-1">
-                                            <CreditCard size={12} className="text-slate-400" />
-                                            {user.credits}
-                                          </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                          <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
-                                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Active
-                                          </span>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                          <button className="text-xs text-wc-blue font-bold hover:underline">Editar</button>
-                                      </td>
-                                  </tr>
-                              ))}
-                          </tbody>
-                      </table>
-                  </div>
-              )}
-
-              {/* TAB: ROLES */}
-              {activeTab === 'roles' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {Object.keys(roleConfig).map(role => (
-                          <div key={role} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                              <h3 className="font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">{role}</h3>
-                              <div className="space-y-4">
-                                  {Object.keys(roleConfig[role]).map(perm => {
-                                      const val = roleConfig[role][perm];
-                                      
-                                      // Render Boolean Toggle
-                                      if (typeof val === 'boolean') {
-                                        return (
-                                          <div key={perm} className="flex justify-between items-center">
-                                              <span className="text-xs text-slate-600 capitalize">{perm.replace(/_/g, ' ')}</span>
-                                              <button 
-                                                onClick={() => togglePermission(role, perm)}
-                                                className={`transition-colors ${val ? 'text-wc-blue' : 'text-slate-300'}`}
-                                              >
-                                                  {val ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                                              </button>
-                                          </div>
-                                        );
-                                      }
-                                      
-                                      // Render Number Input
-                                      if (typeof val === 'number') {
-                                          return (
-                                            <div key={perm} className="flex flex-col gap-1">
-                                                <span className="text-xs text-slate-600 capitalize">{perm.replace(/_/g, ' ')}</span>
-                                                <input 
-                                                    type="number" 
-                                                    value={val}
-                                                    onChange={(e) => updateNumericSetting(role, perm, parseInt(e.target.value))}
-                                                    className="w-full px-2 py-1 rounded border border-slate-200 text-xs"
-                                                />
-                                            </div>
-                                          );
-                                      }
-
-                                      // Render String (Read Only for now)
-                                      return (
-                                         <div key={perm} className="flex flex-col gap-1">
-                                            <span className="text-xs text-slate-600 capitalize">{perm.replace(/_/g, ' ')}</span>
-                                            <div className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">{val}</div>
-                                         </div>
-                                      );
-                                  })}
-                              </div>
+                  <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                          <h3 className="text-xl font-bold">Usuarios del Ecosistema</h3>
+                          <div className="relative">
+                              <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                              <input type="text" placeholder="Buscar email o ID..." className="pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm outline-none" />
                           </div>
-                      ))}
+                      </div>
+                      <div className="overflow-hidden border border-slate-100 rounded-2xl">
+                          <table className="w-full text-left">
+                              <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase">
+                                  <tr>
+                                      <th className="p-4">Usuario</th>
+                                      <th className="p-4">Rol</th>
+                                      <th className="p-4">Créditos</th>
+                                      <th className="p-4">Acción</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                  <UserRow name="Admin QHosting" email="admin@qhosting.net" role="SUPER_ADMIN" credits="∞" onAdjust={() => adjustCredits('wc_admin_god', 1000)} />
+                                  <UserRow name="Carlos Demo" email="carlos@whatscloud.mx" role="ACCOUNT_OWNER" credits="150" onAdjust={() => adjustCredits('wc_user_8821', 50)} />
+                              </tbody>
+                          </table>
+                      </div>
                   </div>
               )}
 
+              {activeTab === 'infra' && (
+                  <div className="space-y-6">
+                      <div className="bg-slate-900 text-white p-6 rounded-2xl font-mono text-sm border border-slate-800">
+                          <div className="flex items-center gap-2 mb-4 text-wc-blue">
+                              <Terminal size={18} />
+                              <span>System Environment Variables</span>
+                          </div>
+                          <p className="text-slate-400 mb-2">DB_URL=postgres://acc_prod:***@whatscloud-os-db:5432</p>
+                          <p className="text-slate-400 mb-2">REDIS_URI={PROD_CONFIG.REDIS.URI}</p>
+                          <p className="text-slate-400">GEMINI_MODEL=gemini-3-flash-preview</p>
+                      </div>
+                  </div>
+              )}
+
+              {activeTab === 'logs' && (
+                  <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                          <h3 className="text-xl font-bold">System Events (Protocol 8888)</h3>
+                          <button onClick={handleClearLogs} className="text-xs text-red-500 font-bold hover:underline flex items-center gap-1">
+                              <Trash2 size={14} /> Limpiar Logs
+                          </button>
+                      </div>
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                          {logs.length === 0 ? (
+                              <p className="text-center py-20 text-slate-400 italic">No hay eventos recientes en el cluster.</p>
+                          ) : (
+                              logs.map(log => (
+                                  <div key={log.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 font-mono text-[11px] flex items-start gap-3">
+                                      <span className="text-slate-400 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                      <span className={log.type === 'ERROR' ? 'text-red-500 font-bold' : 'text-blue-500'}>[{log.type}]</span>
+                                      <span className="text-slate-700">{log.message}</span>
+                                  </div>
+                              ))
+                          )}
+                      </div>
+                  </div>
+              )}
           </div>
       </div>
     </div>
   );
 };
+
+const TabButton = ({ active, onClick, icon, label }: any) => (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${active ? 'bg-slate-900 text-white shadow-xl translate-x-1' : 'text-slate-500 hover:bg-white/50'}`}>
+        {icon} <span>{label}</span>
+    </button>
+);
+
+const StatCard = ({ icon, label, value }: any) => (
+    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">{icon}</div>
+        <div className="text-2xl font-black text-slate-900">{value}</div>
+        <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{label}</div>
+    </div>
+);
+
+const HealthItem = ({ label, status }: any) => (
+    <div className="flex justify-between items-center">
+        <span className="text-sm text-slate-600">{label}</span>
+        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+            {status}
+        </span>
+    </div>
+);
+
+const UserRow = ({ name, email, role, credits, onAdjust }: any) => (
+    <tr className="hover:bg-slate-50/50 transition-colors">
+        <td className="p-4">
+            <div className="font-bold text-slate-800 text-sm">{name}</div>
+            <div className="text-[10px] text-slate-500">{email}</div>
+        </td>
+        <td className="p-4"><span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold">{role}</span></td>
+        <td className="p-4 font-mono font-bold text-wc-blue">{credits}</td>
+        <td className="p-4">
+            <button onClick={onAdjust} className="text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1">
+                <CreditCard size={12} /> + CR
+            </button>
+        </td>
+    </tr>
+);

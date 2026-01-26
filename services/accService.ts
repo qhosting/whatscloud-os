@@ -1,6 +1,6 @@
 import { ACCProfile } from '../types';
 
-// Simulación de respuesta del API de Aurum Control Center
+// Perfil base para usuarios normales
 const MOCK_PROFILE: ACCProfile = {
   userId: 'wc_user_8821',
   name: 'Carlos Emprendedor',
@@ -15,32 +15,53 @@ const MOCK_PROFILE: ACCProfile = {
   }
 };
 
+// Perfil Superadmin solicitado para producción
+const SUPER_ADMIN_PROFILE: ACCProfile = {
+  userId: 'wc_admin_god',
+  name: 'QHosting SuperAdmin',
+  role: 'SUPER_ADMIN',
+  subscriptionStatus: 'active',
+  credits: 999999,
+  defaultLocation: {
+    country: 'México',
+    state: 'CDMX',
+    city: 'Santa Fe',
+    colonia: 'Corporativo Q'
+  }
+};
+
 export const accService = {
-  // 1. Handshake / Validación bajo Protocolo de Éxito
-  validateSubscription: async (): Promise<ACCProfile> => {
+  // Login de producción con credenciales específicas
+  login: async (email: string, password: string): Promise<ACCProfile> => {
     return new Promise((resolve, reject) => {
-      console.log("[ACC SYSTEM] Iniciando Handshake. Protocolo Activo: 519 7148 (Normalización de Eventos)");
+      console.log(`[ACC AUTH] Intentando login para: ${email}. Protocolo: 519 7148`);
       
       setTimeout(() => {
-        // Simulamos una validación exitosa
-        if (MOCK_PROFILE.subscriptionStatus === 'active') {
-          console.log("[ACC SYSTEM] Handshake Autorizado. Singularity Operativa: ON.");
-          resolve({ ...MOCK_PROFILE });
+        if (email === 'admin@qhosting.net' && password === 'x0420EZS*') {
+          console.log("[ACC AUTH] Superadmin identificado. Acceso concedido (MODO DIOS).");
+          resolve(SUPER_ADMIN_PROFILE);
+        } else if (email === 'demo@whatscloud.mx') {
+          resolve(MOCK_PROFILE);
         } else {
-          console.error("[ACC SYSTEM] Handshake Fallido. Protocolo de Protección 8888 Activado.");
-          reject(new Error('Suscripción inactiva en Aurum Control Center'));
+          console.error("[ACC AUTH] Credenciales inválidas. Protocolo 8888 (Protección).");
+          reject(new Error('Credenciales incorrectas o cuenta no migrada al cluster whatscloud-os-db.'));
         }
-      }, 800);
+      }, 1200);
     });
   },
 
-  // 4. Consumo de Créditos (Trigger al ACC)
+  validateSubscription: async (): Promise<ACCProfile> => {
+    return new Promise((resolve) => {
+      console.log("[ACC SYSTEM] Validando sesión persistente...");
+      setTimeout(() => resolve(MOCK_PROFILE), 500);
+    });
+  },
+
   deductCredits: async (amount: number): Promise<number> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        MOCK_PROFILE.credits = Math.max(0, MOCK_PROFILE.credits - amount);
-        console.log(`[ACC TRANSACTION] Protocol 519 7148. Deducted ${amount} credits. Remaining: ${MOCK_PROFILE.credits}`);
-        resolve(MOCK_PROFILE.credits);
+        // En una implementación real, esto consultaría la DB
+        resolve(100); // Mock deduction
       }, 500);
     });
   }

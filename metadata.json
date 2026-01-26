@@ -1,5 +1,8 @@
 {
   "name": "WhatsCloud LeadScrapper",
   "description": "Módulo de extracción de leads integrado con Aurum Control Center (ACC) para WhatsCloud.MX.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
 }
