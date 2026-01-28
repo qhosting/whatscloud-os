@@ -42,6 +42,10 @@ Para llevar este sistema a venta real (SaaS), se requieren los siguientes módul
   - Middleware de protección en Express para rutas `/api/scrape`.
 - [ ] **Base de Datos NoSQL (MongoDB):**
   - Para guardar los logs de chat del Bot y las configuraciones JSON complejas.
+- [ ] **Redis (Caché & Colas):**
+  - Gestión de sesiones de usuario rápidas.
+  - Cola de tareas para el Scraper (evitar saturación de RAM con Puppeteer).
+  - Rate Limiting (evitar abuso de API).
 
 ### Fase 2: Conectividad Externa (Integraciones)
 - [ ] **WhatsApp Webhook:**
