@@ -59,8 +59,13 @@ Para llevar este sistema a venta real (SaaS), se requieren los siguientes módul
   - Endpoint `/api/credits/deduct` backend con validación en base de datos.
 
 ### Fase 3: Robustez del Scraper
-- [ ] **Proxies Rotativos:** Integrar BrightData o IPRoyal en Puppeteer para evitar bloqueos de Google tras muchas búsquedas.
-- [ ] **Colas de Trabajo (Redis + Bull):** Si 100 usuarios buscan a la vez, el servidor colapsará por la RAM de Chrome. Mover el scraping a "Jobs" en segundo plano.
+- [x] **Proxies Rotativos:**
+  - Soporte añadido en `scraperQueue.js` mediante variables de entorno `PROXY_SERVER`.
+- [x] **Colas de Trabajo (Redis + Bull):**
+  - Implementado sistema de colas asíncronas.
+  - Endpoint `/api/scrape` devuelve `jobId` inmediatamente.
+  - Endpoint `/api/scrape/:jobId` permite consultar progreso.
+  - Concurrencia limitada a 2 navegadores simultáneos.
 
 ### Fase 4: DevOps & CI/CD
 - [ ] **Variables de Entorno:** Mover `GEMINI_API_KEY` y credenciales de BD a secretos de Easypanel.

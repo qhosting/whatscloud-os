@@ -18,7 +18,8 @@ export const geminiService = {
         throw new Error("No Auth Token");
       }
 
-      const response = await fetch('/api/scrape', {
+      // 1. Start Job
+      const startResponse = await fetch('/api/scrape', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,12 +33,36 @@ export const geminiService = {
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
+      if (!startResponse.ok) throw new Error("Failed to start scraping job");
 
-      const leads = await response.json();
-      return leads;
+      const { jobId } = await startResponse.json();
+      console.log(`[SCRAPER] Job Started: ${jobId}. Polling...`);
+
+      // 2. Poll for Results
+      return new Promise((resolve, reject) => {
+          const interval = setInterval(async () => {
+              try {
+                  const pollResponse = await fetch(`/api/scrape/${jobId}`, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  const status = await pollResponse.json();
+
+                  console.log(`[SCRAPER] Job Status: ${status.state} (${status.progress}%)`);
+
+                  if (status.state === 'completed') {
+                      clearInterval(interval);
+                      resolve(status.result);
+                  } else if (status.state === 'failed') {
+                      clearInterval(interval);
+                      reject(new Error(status.error || "Scraping failed"));
+                  }
+                  // continue waiting if active/waiting/delayed
+              } catch (e) {
+                  clearInterval(interval);
+                  reject(e);
+              }
+          }, 2000); // Check every 2s
+      });
 
     } catch (error) {
       console.error("Error en scraping real (Protocol 8888 Active):", error);
