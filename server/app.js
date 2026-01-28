@@ -1,8 +1,8 @@
+import './config/env.js'; // LOAD ENV FIRST
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 
 // Import Database & Auth
@@ -10,7 +10,10 @@ import { sequelize, connectMongo, connectRedis } from './config/database.js';
 import { login, register } from './controllers/authController.js';
 import { verifyToken } from './middleware/authMiddleware.js';
 
-dotenv.config();
+// Import Integration Controllers
+import { handleIncomingMessage } from './controllers/whatsappController.js';
+import { initiateCall } from './controllers/voipController.js';
+import { deductCredits } from './controllers/creditsController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +40,13 @@ app.use(express.json());
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', register);
 app.post('/api/auth/login', login);
+
+// --- INTEGRATION ROUTES ---
+app.post('/webhook/whatsapp', handleIncomingMessage); // WAHA Webhook
+app.post('/api/call', verifyToken, initiateCall); // VoIP Action
+
+// --- CREDIT ROUTES ---
+app.post('/api/credits/deduct', verifyToken, deductCredits);
 
 // API Routes
 app.get('/api/health', (req, res) => {

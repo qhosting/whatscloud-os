@@ -15,7 +15,7 @@ export const accService = {
       }
 
       const data = await response.json();
-      
+
       // Store Token
       localStorage.setItem('wc_auth_token', data.token);
 
@@ -88,7 +88,31 @@ export const accService = {
   },
 
   deductCredits: async (amount: number): Promise<number> => {
-     // TODO: Implement backend deduction
-     return 99;
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      if (!token) throw new Error("No token");
+
+      const response = await fetch('/api/credits/deduct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      if (!response.ok) {
+        // Fallback optimistic if error (or handle better in prod)
+        console.error("Credit sync failed");
+        return 0;
+      }
+
+      const data = await response.json();
+      return data.remaining;
+
+    } catch (e) {
+      console.error("Credit Error", e);
+      return 0;
+    }
   }
 };

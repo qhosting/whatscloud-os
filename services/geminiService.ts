@@ -1,7 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lead, SearchFilters, BotConfig, SmartAction, ChatMessage, LongTermMemory } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// NOTE: Frontend AI client is kept for Chat Simulator but should use a proxy in production.
+// For Scraper, we use the Backend API exclusively.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const geminiService = {
   // Motor de Scraping Real (Puppeteer en Servidor)
