@@ -49,13 +49,14 @@ Para llevar este sistema a venta real (SaaS), se requieren los siguientes módul
   - Rate Limiting (evitar abuso de API).
 
 ### Fase 2: Conectividad Externa (Integraciones)
-- [ ] **WhatsApp Webhook:**
-  - Crear endpoint `POST /webhook/whatsapp` en el backend.
-  - Conectar con API de WAHA (WhatsApp HTTP API) o Meta Cloud API.
-  - Lógica: Recibir mensaje -> Consultar IA (Gemini) -> Responder.
-- [ ] **VoIP (Asterisk/Issabel):**
-  - Implementar conexión AMI (Asterisk Manager Interface) en Node.js.
-  - Endpoint `/api/call` que dispare la acción `Originate` al PBX del cliente.
+- [x] **WhatsApp Webhook:**
+  - Endpoint `POST /webhook/whatsapp` implementado.
+  - Conectado a controlador que procesa IA (Gemini) y responde a WAHA.
+- [x] **VoIP (Asterisk/Issabel):**
+  - Conexión AMI implementada con `asterisk-manager`.
+  - Endpoint `/api/call` dispara acción `Originate` real al PBX.
+- [x] **Gestión de Créditos Real:**
+  - Endpoint `/api/credits/deduct` backend con validación en base de datos.
 
 ### Fase 3: Robustez del Scraper
 - [ ] **Proxies Rotativos:** Integrar BrightData o IPRoyal en Puppeteer para evitar bloqueos de Google tras muchas búsquedas.
