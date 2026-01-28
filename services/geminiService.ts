@@ -10,10 +10,17 @@ export const geminiService = {
     try {
       console.log("[SCRAPER] Iniciando protocolo de extracción real...");
 
+      const token = localStorage.getItem('wc_auth_token');
+      if (!token) {
+        alert("Sesión expirada. Por favor recarga e inicia sesión.");
+        throw new Error("No Auth Token");
+      }
+
       const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           niche: filters.niche,

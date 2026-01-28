@@ -5,6 +5,11 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import puppeteer from 'puppeteer';
 
+// Import Database & Auth
+import { sequelize, connectMongo, connectRedis } from './config/database.js';
+import { login, register } from './controllers/authController.js';
+import { verifyToken } from './middleware/authMiddleware.js';
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,14 +22,33 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// --- DATABASE CONNECTION ---
+(async () => {
+    try {
+        await sequelize.authenticate();
+        await sequelize.sync(); // Auto-create tables (Dev Mode)
+        console.log('[DB] PostgreSQL Connected & Synced');
+    } catch (e) { console.error('[DB] Postgres Connection Failed', e.message); }
+
+    await connectMongo();
+    await connectRedis();
+})();
+
+// --- AUTH ROUTES ---
+app.post('/api/auth/register', register);
+app.post('/api/auth/login', login);
+
 // API Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'WhatsCloud Scrapper API', mode: 'production' });
 });
 
-app.post('/api/scrape', async (req, res) => {
+// PROTECTED ROUTE: SCRAPING
+app.post('/api/scrape', verifyToken, async (req, res) => {
   const { niche, city, country, limit = 5 } = req.body;
-  console.log(`[SCRAPER] Request received: ${niche} in ${city}, ${country}`);
+  const user = req.user; // From verifyToken
+
+  console.log(`[SCRAPER] Request received from User ${user.id}: ${niche} in ${city}, ${country}`);
 
   if (!niche || !city) {
     return res.status(400).json({ error: 'Missing niche or city' });
