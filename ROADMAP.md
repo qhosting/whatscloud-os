@@ -19,11 +19,12 @@ Hemos migrado de un prototipo 100% simulado en frontend a una arquitectura **Ful
   - El Backend lanza una instancia de **Chrome Headless (Puppeteer)**.
   - Navega en tiempo real a Google Maps y extrae: Nombre, Dirección, Teléfono, Rating y Reviews.
 - **🐳 Containerización:** El proyecto es un "Monolito Modular". El contenedor construye el frontend y levanta el backend que sirve tanto la API como los archivos estáticos.
+- **🔐 Seguridad y Persistencia:**
+  - **Auth:** Sistema Login/Registro funcional con JWT (`bcrypt` + `jsonwebtoken`).
+  - **DB Híbrida:** PostgreSQL (Usuarios) + MongoDB (Configs) + Redis (Conexión establecida).
 
 ### 3. Funcionalidades Simuladas (Mocks)
 Aunque la UI existe, estas partes aún operan con datos falsos o locales:
-- **Autenticación:** El usuario `wc_user_8821` está harcodeado en `accService.ts`.
-- **Persistencia:** Todo se guarda en `localStorage` del navegador. Si borras caché, pierdes los datos.
 - **Telefonía:** El módulo de llamadas solo simula la conexión.
 - **Bot Builder:** Configuras el bot, pero no hay un Webhook real escuchando a WhatsApp.
 
@@ -34,15 +35,15 @@ Aunque la UI existe, estas partes aún operan con datos falsos o locales:
 Para llevar este sistema a venta real (SaaS), se requieren los siguientes módulos de infraestructura.
 
 ### Fase 1: Persistencia y Seguridad (Prioridad Alta)
-- [ ] **Base de Datos (PostgreSQL):**
+- [x] **Base de Datos (PostgreSQL):**
   - Migrar `localStorage` a una BD real.
   - Tablas: `Users`, `Organizations`, `CreditsLedger`, `Leads`.
-- [ ] **Autenticación (JWT / Auth0):**
+- [x] **Autenticación (JWT / Auth0):**
   - Crear endpoints `/api/login` y `/api/register`.
   - Middleware de protección en Express para rutas `/api/scrape`.
-- [ ] **Base de Datos NoSQL (MongoDB):**
+- [x] **Base de Datos NoSQL (MongoDB):**
   - Para guardar los logs de chat del Bot y las configuraciones JSON complejas.
-- [ ] **Redis (Caché & Colas):**
+- [x] **Redis (Caché & Colas):**
   - Gestión de sesiones de usuario rápidas.
   - Cola de tareas para el Scraper (evitar saturación de RAM con Puppeteer).
   - Rate Limiting (evitar abuso de API).
