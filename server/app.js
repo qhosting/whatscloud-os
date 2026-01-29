@@ -15,9 +15,18 @@ import { handleIncomingMessage } from './controllers/whatsappController.js';
 import { initiateCall } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
+import cron from 'node-cron';
+import { performBackup } from './services/backupService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// --- CRON JOBS ---
+// Run Backup daily at 3:00 AM
+cron.schedule('0 3 * * *', () => {
+    console.log('[CRON] Running Scheduled Backup...');
+    performBackup();
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
