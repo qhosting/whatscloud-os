@@ -73,3 +73,9 @@ Para llevar este sistema a venta real (SaaS), se requieren los siguientes módul
 - [x] **Health Checks:**
   - Endpoint `/api/health` verifica Redis, Postgres y Browser.
   - `HEALTHCHECK` configurado en Dockerfile para autorecuperación en Easypanel.
+
+### Fase 5: Hardening & Seguridad Avanzada (Pendiente)
+- [ ] **Rate Limiting:** Implementar `express-rate-limit` para prevenir abuso de la API de scraping.
+- [ ] **Headers de Seguridad:** Implementar `helmet` para protección contra XSS y Clickjacking.
+- [ ] **CORS Restrictivo:** Configurar orígenes permitidos explícitamente.
+- [ ] **Sanitización:** Validar inputs con `express-validator` o Zod.
