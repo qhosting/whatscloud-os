@@ -3,13 +3,17 @@ import AmiClient from 'asterisk-manager';
 let ami = null;
 
 // Configurar conexión AMI solo si existen credenciales
-if (process.env.AMI_HOST && process.env.AMI_USER && process.env.AMI_SECRET) {
-    console.log(`[AMI] Initializing connection to ${process.env.AMI_HOST}...`);
+const AMI_HOST = process.env.AMI_HOST?.trim();
+const AMI_USER = process.env.AMI_USER?.trim();
+const AMI_SECRET = process.env.AMI_SECRET?.trim();
+
+if (AMI_HOST && AMI_USER && AMI_SECRET) {
+    console.log(`[AMI] Initializing connection to ${AMI_HOST}...`);
     ami = new AmiClient(
         process.env.AMI_PORT || 5038,
-        process.env.AMI_HOST,
-        process.env.AMI_USER,
-        process.env.AMI_SECRET
+        AMI_HOST,
+        AMI_USER,
+        AMI_SECRET
     );
 
     // Keep alive / Error handling
