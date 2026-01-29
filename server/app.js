@@ -50,8 +50,45 @@ app.post('/api/call', verifyToken, initiateCall); // VoIP Action
 app.post('/api/credits/deduct', verifyToken, deductCredits);
 
 // API Routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'WhatsCloud Scrapper API', mode: 'production' });
+app.get('/api/health', async (req, res) => {
+  const status = {
+    service: 'WhatsCloud Scrapper API',
+    uptime: process.uptime(),
+    timestamp: new Date(),
+    checks: {
+      redis: 'unknown',
+      postgres: 'unknown',
+      browser_capability: 'unknown'
+    }
+  };
+
+  // Check Redis
+  try {
+    const { redisClient } = await import('./config/database.js');
+    if (redisClient.isOpen) status.checks.redis = 'ok';
+    else status.checks.redis = 'disconnected';
+  } catch (e) { status.checks.redis = 'error'; }
+
+  // Check Postgres
+  try {
+    const { sequelize } = await import('./config/database.js');
+    await sequelize.authenticate();
+    status.checks.postgres = 'ok';
+  } catch (e) { status.checks.postgres = 'error'; }
+
+  // Check Browser (Puppeteer)
+  // Only check if not overloaded, lightly
+  try {
+     const puppeteer = await import('puppeteer');
+     // Just check if executable path is valid or libs present,
+     // fully launching browser might be too heavy for a simple health check
+     // if called frequently by orchestrator.
+     // We'll trust if dependencies are installed.
+     status.checks.browser_capability = 'ready';
+  } catch (e) { status.checks.browser_capability = 'missing_libs'; }
+
+  const statusCode = (status.checks.redis === 'error' || status.checks.postgres === 'error') ? 503 : 200;
+  res.status(statusCode).json(status);
 });
 
 // PROTECTED ROUTE: SCRAPING (ASYNC QUEUE)

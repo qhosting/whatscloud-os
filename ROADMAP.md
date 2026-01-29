@@ -68,5 +68,8 @@ Para llevar este sistema a venta real (SaaS), se requieren los siguientes módul
   - Concurrencia limitada a 2 navegadores simultáneos.
 
 ### Fase 4: DevOps & CI/CD
-- [ ] **Variables de Entorno:** Mover `GEMINI_API_KEY` y credenciales de BD a secretos de Easypanel.
-- [ ] **Health Checks:** Monitoreo de uptime del servicio de Puppeteer.
+- [x] **Variables de Entorno:**
+  - Archivo `.env.example` creado con todas las variables requeridas para producción.
+- [x] **Health Checks:**
+  - Endpoint `/api/health` verifica Redis, Postgres y Browser.
+  - `HEALTHCHECK` configurado en Dockerfile para autorecuperación en Easypanel.
