@@ -1,18 +1,30 @@
 import AmiClient from 'asterisk-manager';
 
-// Configurar conexión AMI (Singleton)
-const ami = new AmiClient(
-    process.env.AMI_PORT || 5038,
-    process.env.AMI_HOST || 'localhost',
-    process.env.AMI_USER,
-    process.env.AMI_SECRET
-);
+let ami = null;
 
-// Keep alive / Error handling
-ami.keepConnected();
-ami.on('error', (err) => console.error('[AMI] Error:', err));
+// Configurar conexión AMI solo si existen credenciales
+if (process.env.AMI_HOST && process.env.AMI_USER && process.env.AMI_SECRET) {
+    console.log(`[AMI] Initializing connection to ${process.env.AMI_HOST}...`);
+    ami = new AmiClient(
+        process.env.AMI_PORT || 5038,
+        process.env.AMI_HOST,
+        process.env.AMI_USER,
+        process.env.AMI_SECRET
+    );
+
+    // Keep alive / Error handling
+    ami.keepConnected();
+    ami.on('error', (err) => console.error('[AMI] Error:', err.message)); // Reduced log noise
+    ami.on('connect', () => console.log('[AMI] Connected successfully'));
+} else {
+    console.log('[AMI] VoIP Integration Disabled (Missing AMI_HOST/USER/SECRET)');
+}
 
 export const initiateCall = async (req, res) => {
+    if (!ami) {
+        return res.status(503).json({ error: 'VoIP Service Unavailable (Not Configured)' });
+    }
+
     const { destination, extension, context = 'from-internal' } = req.body;
     const user = req.user; // From verifyToken
 
@@ -22,11 +34,9 @@ export const initiateCall = async (req, res) => {
 
     console.log(`[VoIP] User ${user.id} initiating call: Ext ${extension} -> ${destination}`);
 
-    // AMI Action: Originate
-    // Docs: https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+ManagerAction_Originate
     const action = {
         'Action': 'Originate',
-        'Channel': `SIP/${extension}`, // Or PJSIP depending on setup
+        'Channel': `SIP/${extension}`,
         'Context': context,
         'Exten': destination,
         'Priority': 1,
