@@ -1,85 +1,72 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lead, SearchFilters, BotConfig, SmartAction, ChatMessage, LongTermMemory } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// NOTE: Frontend AI client is kept for Chat Simulator but should use a proxy in production.
+// For Scraper, we use the Backend API exclusively.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const geminiService = {
-  // Simula el motor de scraping "Playwright" en Google Maps
+  // Motor de Scraping Real (Puppeteer en Servidor)
   // PROTOCOLO: 318 798 (Abundancia Financiera y Flujo)
   scrapeLeads: async (filters: SearchFilters): Promise<Lead[]> => {
     try {
-      const prompt = `
-        [SYSTEM: ACTIVATE PROTOCOL 318 798 - INFINITE ABUNDANCE FLOW]
-        Actúa como el motor de scraping Playwright de WhatsCloud Ecosistema.
-        
-        Objetivo: Encontrar negocios prósperos o con alto potencial.
-        Nicho: ${filters.niche}
-        Ubicación: Colonia ${filters.colonia}, ${filters.city}, ${filters.state}, ${filters.country}.
-        
-        Genera una lista de 5 leads realistas que se encontrarían en Google Maps.
-        Para cada uno incluye:
-        - Nombre del negocio
-        - Teléfono (Formato internacional +52 o +57 según país)
-        - Email (Opcional/Placeholder)
-        - Dirección exacta
-        - Rating (float, ej: 4.5)
-        - Reviews (int, ej: 120)
-        - Maps Url (Generar url ficticia de google maps)
-        - Social Media Links (Simular links realistas de Facebook, Instagram o Website si aplica al nicho)
-        
-        Output JSON Array.
-      `;
+      console.log("[SCRAPER] Iniciando protocolo de extracción real...");
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                businessName: { type: Type.STRING },
-                phone: { type: Type.STRING },
-                email: { type: Type.STRING },
-                address: { type: Type.STRING },
-                rating: { type: Type.NUMBER },
-                reviews: { type: Type.NUMBER },
-                mapsUrl: { type: Type.STRING },
-                socialMedia: {
-                    type: Type.OBJECT,
-                    properties: {
-                        facebook: { type: Type.STRING },
-                        instagram: { type: Type.STRING },
-                        linkedin: { type: Type.STRING },
-                        website: { type: Type.STRING }
-                    }
-                }
-              }
-            }
-          }
-        }
+      const token = localStorage.getItem('wc_auth_token');
+      if (!token) {
+        alert("Sesión expirada. Por favor recarga e inicia sesión.");
+        throw new Error("No Auth Token");
+      }
+
+      // 1. Start Job
+      const startResponse = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          niche: filters.niche,
+          city: filters.city,
+          country: filters.country,
+          limit: 5
+        })
       });
 
-      const rawData = JSON.parse(response.text || '[]');
-      
-      return rawData.map((item: any, index: number) => ({
-        id: `lead_${Date.now()}_${index}`,
-        businessName: item.businessName,
-        phone: item.phone,
-        email: item.email || null,
-        address: item.address,
-        category: filters.niche,
-        rating: item.rating || 0,
-        reviews: item.reviews || 0,
-        mapsUrl: item.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(item.businessName)}`,
-        status: 'new',
-        socialMedia: item.socialMedia
-      }));
+      if (!startResponse.ok) throw new Error("Failed to start scraping job");
+
+      const { jobId } = await startResponse.json();
+      console.log(`[SCRAPER] Job Started: ${jobId}. Polling...`);
+
+      // 2. Poll for Results
+      return new Promise((resolve, reject) => {
+          const interval = setInterval(async () => {
+              try {
+                  const pollResponse = await fetch(`/api/scrape/${jobId}`, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  const status = await pollResponse.json();
+
+                  console.log(`[SCRAPER] Job Status: ${status.state} (${status.progress}%)`);
+
+                  if (status.state === 'completed') {
+                      clearInterval(interval);
+                      resolve(status.result);
+                  } else if (status.state === 'failed') {
+                      clearInterval(interval);
+                      reject(new Error(status.error || "Scraping failed"));
+                  }
+                  // continue waiting if active/waiting/delayed
+              } catch (e) {
+                  clearInterval(interval);
+                  reject(e);
+              }
+          }, 2000); // Check every 2s
+      });
 
     } catch (error) {
-      console.error("Error simulando scraping con Gemini (Protocol 8888 Active):", error);
+      console.error("Error en scraping real (Protocol 8888 Active):", error);
+      alert("Error conectando con el servidor de scraping. Ver consola.");
       return [];
     }
   },

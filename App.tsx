@@ -94,15 +94,57 @@ const App: React.FC = () => {
     }
   };
 
-  const exportLeads = async () => {
-    if (!profile || leads.length === 0) return;
-    const leadsToExport = leads.filter(l => selectedLeads.has(l.id));
-    if (leadsToExport.length === 0) {
-        alert("Selecciona prospectos para exportar al CRM corporativo.");
+  // Intelligence Singularity: Analyze Specific Lead
+  const handleAnalyzeLead = async (lead: Lead) => {
+      const strategy = await geminiService.analyzeLeadStrategy(lead);
+      setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, analysis: strategy } : l));
+      // Trigger Protocol Visual
+      setActiveProtocol('ABUNDANCE_318_798');
+      setTimeout(() => setActiveProtocol(null), 3000);
+  };
+
+  // --- CLICK TO CALL HANDLER (VOIP REAL) ---
+  const handleClickToCall = async (lead: Lead) => {
+    if (!profile) return;
+    
+    if (profile.credits < 1) {
+        alert("Sin créditos para llamar.");
         return;
     }
-    await automationService.exportLeadsToDB(leadsToExport, profile.userId);
-    alert(`${leadsToExport.length} Prospectos sincronizados con whatscloud-os-db (PostgreSQL 16).`);
+
+    // Deduct (Optimistic UI)
+    const remaining = await accService.deductCredits(1);
+    setProfile({ ...profile, credits: remaining });
+
+    // REAL BACKEND CALL
+    try {
+        const token = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/call', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                destination: lead.phone,
+                extension: profile.pbxExtension || '101'
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(`Error VoIP: ${data.error || 'Fallo desconocido'}`);
+        } else {
+             // Visual Protocol
+             setActiveProtocol('ABUNDANCE_318_798'); // Connection/Flow
+             alert("Centralita: Llamando...");
+        }
+
+    } catch (e) {
+        console.error("VoIP Error", e);
+        alert("Error de conexión con la centralita.");
+    }
   };
 
   const processedLeads = useMemo(() => {
