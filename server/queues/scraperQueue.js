@@ -1,5 +1,8 @@
 import Queue from 'bull';
 import puppeteer from 'puppeteer';
+import { Lead, Organization } from '../models/index.js';
+import { exportLeadToIntegrations } from '../services/webhookService.js';
+import logger from '../config/logger.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -7,11 +10,10 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 export const scraperQueue = new Queue('scraper-queue', REDIS_URL);
 
 // 2. Procesador (Worker Logic)
-// Concurrency: 2 (Solo 2 navegadores a la vez para proteger RAM)
 scraperQueue.process(2, async (job) => {
-    const { niche, city, country, limit } = job.data;
+    const { niche, city, country, limit, userId, organizationId } = job.data;
 
-    console.log(`[QUEUE] Processing Job ${job.id}: ${niche} in ${city}`);
+    logger.info(`[QUEUE] Processing Job ${job.id}: ${niche} in ${city} for User ${userId}`);
 
     let browser;
     try {
@@ -22,7 +24,6 @@ scraperQueue.process(2, async (job) => {
             '--disable-gpu'
         ];
 
-        // PROXY INTEGRATION (Phase 3)
         if (process.env.PROXY_SERVER) {
             launchArgs.push(`--proxy-server=${process.env.PROXY_SERVER}`);
         }
@@ -34,7 +35,6 @@ scraperQueue.process(2, async (job) => {
 
         const page = await browser.newPage();
 
-        // PROXY AUTH
         if (process.env.PROXY_USERNAME && process.env.PROXY_PASSWORD) {
             await page.authenticate({
                 username: process.env.PROXY_USERNAME,
@@ -47,11 +47,11 @@ scraperQueue.process(2, async (job) => {
         const query = `${niche} en ${city}, ${country || ''}`;
         const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
 
-        job.progress(10); // 10% - Browser Started
+        job.progress(10);
 
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
-        job.progress(30); // 30% - Page Loaded
+        job.progress(30);
 
         try {
             await page.waitForSelector('div[role="feed"]', { timeout: 10000 });
@@ -59,19 +59,18 @@ scraperQueue.process(2, async (job) => {
             throw new Error("Google Maps did not load results list.");
         }
 
-        const leads = [];
+        const scrapedLeads = [];
 
         await page.evaluate(async () => {
             const feed = document.querySelector('div[role="feed"]');
-            if(feed) {
+            if (feed) {
                 feed.scrollBy(0, 1000);
                 await new Promise(r => setTimeout(r, 1000));
             }
         });
 
         const itemSelectors = await page.$$('div[role="feed"] > div > div > a');
-
-        job.progress(50); // 50% - Items Found
+        job.progress(50);
 
         for (let i = 0; i < Math.min(itemSelectors.length, limit); i++) {
             try {
@@ -98,36 +97,57 @@ scraperQueue.process(2, async (job) => {
                     const buttons = Array.from(document.querySelectorAll('button'));
                     const phoneBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('phone'));
                     const phone = phoneBtn ? phoneBtn.innerText : '';
+                    const websiteBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('authority'));
+                    const website = websiteBtn ? websiteBtn.innerText : '';
                     const addressBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('address'));
                     const address = addressBtn ? addressBtn.innerText : '';
 
-                    return { businessName, rating, reviews, phone, address };
+                    return { businessName, rating, reviews, phone, address, website };
                 });
 
-                if (data.businessName) {
-                    leads.push({
-                        id: `scraped_${Date.now()}_${i}`,
-                        ...data,
-                        category: niche,
-                        status: 'new',
-                        mapsUrl: page.url()
+                if (data.businessName && data.phone) {
+                    const [lead, created] = await Lead.upsert({
+                        name: data.businessName,
+                        phone: data.phone,
+                        niche,
+                        city,
+                        country,
+                        website: data.website,
+                        address: data.address,
+                        rating: data.rating,
+                        reviews: data.reviews,
+                        organizationId: organizationId,
+                        metadata: { mapsUrl: page.url() }
                     });
+
+                    scrapedLeads.push(lead);
+                    logger.info(`[SCRAPER] Lead ${created ? 'Created' : 'Updated'}: ${data.phone}`);
+
+                    // Trigger Core Integrations (n8n, Chatwoot, ACC)
+                    try {
+                        const org = await Organization.findByPk(organizationId);
+                        if (org) {
+                            await exportLeadToIntegrations(lead, org);
+                        }
+                    } catch (intError) {
+                        logger.error(`[SCRAPER] Integration Trigger Error: ${intError.message}`);
+                    }
                 }
 
-                // Update Progress loop
                 const progress = 50 + Math.floor(((i + 1) / limit) * 50);
                 job.progress(progress);
 
             } catch (err) {
-                console.error(`[SCRAPER] Item error: ${err.message}`);
+                logger.error(`[SCRAPER] Item error: ${err.message}`);
             }
         }
 
         await browser.close();
-        return leads; // Job Result
+        return scrapedLeads;
 
     } catch (error) {
         if (browser) await browser.close();
+        logger.error(`[QUEUE] Job ${job.id} Failed: ${error.message}`);
         throw error;
     }
 });

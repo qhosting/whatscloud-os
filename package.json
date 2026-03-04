@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "node server/app.js",
+    "start": "node server/server.js",
+    "test": "set NODE_ENV=test && set NODE_OPTIONS=--experimental-vm-modules && npx jest",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,22 +20,35 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "googleapis": "^170.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
     "node-cron": "^4.2.1",
     "pg": "^8.17.2",
     "pg-hstore": "^2.3.4",
+    "prom-client": "^15.1.3",
     "puppeteer": "^24.36.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "redis": "^5.10.0",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "stripe": "^20.4.0",
+    "twilio": "^5.12.2",
+    "winston": "^3.19.0",
+    "winston-loki": "^6.1.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "supertest": "^7.2.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

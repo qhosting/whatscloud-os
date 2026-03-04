@@ -1,13 +1,25 @@
 import { GoogleGenAI } from "@google/genai";
 import { BotConfig } from '../models/BotConfig.js';
 import axios from 'axios';
+import logger from '../config/logger.js';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let ai;
+if (process.env.API_KEY) {
+  ai = new GoogleGenAI(process.env.API_KEY);
+} else {
+  // Silent warning for tests to avoid console clutter if needed
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn('[WHATSAPP] API_KEY not set. Gemini responses will fail.');
+  }
+}
 
 // WAHA API URL (Simulated or Real Env Var)
 const WAHA_API_URL = process.env.WAHA_API_URL || 'http://localhost:3000/api/waha';
 
 export const handleIncomingMessage = async (req, res) => {
+  if (!ai && process.env.NODE_ENV !== 'test') {
+    return res.status(500).json({ error: 'AI not configured' });
+  }
   // WAHA Payload Structure (Simplified)
   // { payload: { from: '5215512345678@c.us', body: 'Hola', ... } }
   const { payload } = req.body;
@@ -25,43 +37,43 @@ export const handleIncomingMessage = async (req, res) => {
   // 1. Load Bot Config from Mongo
   let botConfig;
   try {
-      botConfig = await BotConfig.findOne({ userId });
+    botConfig = await BotConfig.findOne({ userId });
   } catch (e) {
-      console.error("DB Error", e);
+    console.error("DB Error", e);
   }
 
   if (!botConfig) {
-      // Fallback response if no bot configured
-      return res.sendStatus(200);
+    // Fallback response if no bot configured
+    return res.sendStatus(200);
   }
 
   // 2. Process with Gemini
   try {
-      const prompt = `
+    const prompt = `
         [System: ${botConfig.systemPrompt}]
         [Knowledge: ${botConfig.knowledgeBase}]
         User: ${message}
       `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: prompt
-      });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt
+    });
 
-      const reply = response.text || "Lo siento, no puedo responder ahora.";
+    const reply = response.text || "Lo siento, no puedo responder ahora.";
 
-      // 3. Send Reply via WAHA
-      // WAHA uses POST /api/sendText
-      await axios.post(`${WAHA_API_URL}/sendText`, {
-          session: 'default',
-          chatId: sender,
-          text: reply
-      });
+    // 3. Send Reply via WAHA
+    // WAHA uses POST /api/sendText
+    await axios.post(`${WAHA_API_URL}/sendText`, {
+      session: 'default',
+      chatId: sender,
+      text: reply
+    });
 
-      console.log(`[WHATSAPP] Replied: ${reply}`);
+    console.log(`[WHATSAPP] Replied: ${reply}`);
 
   } catch (error) {
-      console.error("[WHATSAPP] Error processing bot logic:", error);
+    console.error("[WHATSAPP] Error processing bot logic:", error);
   }
 
   res.sendStatus(200); // Acknowledge Webhook

@@ -16,9 +16,13 @@ export const connectMongo = async () => {
   try {
     const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/whatscloud';
     await mongoose.connect(mongoUrl);
-    console.log('[DB] MongoDB Connected');
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('[DB] MongoDB Connected');
+    }
   } catch (error) {
-    console.error('[DB] MongoDB Connection Error:', error.message);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[DB] MongoDB Connection Error:', error.message);
+    }
   }
 };
 
@@ -27,13 +31,21 @@ export const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 
-redisClient.on('error', (err) => console.error('[DB] Redis Client Error', err));
+redisClient.on('error', (err) => {
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('[DB] Redis Client Error', err);
+  }
+});
 
 export const connectRedis = async () => {
-    try {
-        await redisClient.connect();
-        console.log('[DB] Redis Connected');
-    } catch (error) {
-        console.error('[DB] Redis Connection Error:', error.message);
+  try {
+    await redisClient.connect();
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('[DB] Redis Connected');
     }
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[DB] Redis Connection Error:', error.message);
+    }
+  }
 };

@@ -24,6 +24,10 @@ export const User = sequelize.define('User', {
   credits: {
     type: DataTypes.INTEGER,
     defaultValue: 10,
+  },
+  organizationId: {
+    type: DataTypes.UUID,
+    allowNull: true, // Initially null for orphans or during setup, but expected for production
   }
 }, {
   timestamps: true,
