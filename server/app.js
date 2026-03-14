@@ -15,7 +15,7 @@ import { verifyToken } from './middleware/authMiddleware.js';
 
 // Import Integration Controllers
 import { handleIncomingMessage } from './controllers/whatsappController.js';
-import { initiateCall } from './controllers/voipController.js';
+import { initiateCall, createVoiceCampaign } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
 import { getLeads, getLeadDetail, deleteLead } from './controllers/leadController.js';
@@ -131,11 +131,19 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
+// --- QUEUE WORKERS ---
+import { voiceQueue } from './queues/voiceQueue.js';
+import { scraperQueue } from './queues/scraperQueue.js';
+
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', validate(registerSchema), register);
 app.post('/api/auth/login', validate(loginSchema), login);
 
 import { handleN8nIncoming } from './services/webhookService.js';
+
+// --- VOIP & CAMPAIGN ROUTES ---
+app.post('/api/call', verifyToken, initiateCall);
+app.post('/api/voice/campaign', verifyToken, createVoiceCampaign);
 
 // --- INTEGRATION ROUTES ---
 app.post('/webhook/whatsapp', handleIncomingMessage);

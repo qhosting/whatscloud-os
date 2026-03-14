@@ -424,18 +424,15 @@ const App: React.FC = () => {
                  });
                  alert("Campaña SMS encolada en Redis para envío inmediato.");
              }} />}
-             {activeModule === 'VoiceCampaigns' && <VoiceCampaigns initialLeads={leads.filter(l => selectedLeads.has(l.id))} accCredits={profile.credits} onSendCampaign={(config, cost) => {
-                 automationService.trigger({
-                    action: 'voice_campaign',
-                    userId: profile.userId,
-                    timestamp: new Date().toISOString(),
-                    module: 'VoiceCampaigns',
-                    role: profile.role,
-                    holding_identity: { entity: 'Aurum Capital Holding', engine: 'WhatsCloud Ecosistema', active_protocol: 'ABUNDANCE_318_798' },
-                    data: { config, cost, pbx_host: 'issabel.whatscloud.mx' }
-                });
-                alert("Campaña de Robocalling disparada en Issabel PBX.");
-             }} />}
+              {activeModule === 'VoiceCampaigns' && <VoiceCampaigns initialLeads={leads.filter(l => selectedLeads.has(l.id))} accCredits={profile.credits} onSendCampaign={async (config, cost) => {
+                  try {
+                      const result = await accService.sendVoiceCampaign(config, cost);
+                      setProfile(prev => prev ? {...prev, credits: result.remainingCredits} : null);
+                      alert(`Campaña "${config.campaignName}" disparada exitosamente en Issabel PBX.`);
+                  } catch (e) {
+                      alert("Error al lanzar la campaña. Verifica tus créditos y conexión.");
+                  }
+              }} />}
              {activeModule === 'Connections' && <ConnectionsModule role={profile.role} onCreateChannel={(data) => {
                  automationService.trigger({
                      action: 'create_channel',

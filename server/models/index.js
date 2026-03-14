@@ -3,6 +3,7 @@ import { Organization } from './Organization.js';
 import { Lead } from './Lead.js';
 import { CreditTransaction } from './CreditTransaction.js';
 import { BotConfig } from './BotConfig.js';
+import { VoiceCampaign } from './VoiceCampaign.js';
 
 // Relations
 Organization.hasMany(User, { foreignKey: 'organizationId', as: 'users' });
@@ -17,10 +18,17 @@ CreditTransaction.belongsTo(Organization, { foreignKey: 'organizationId' });
 User.hasMany(CreditTransaction, { foreignKey: 'userId' });
 CreditTransaction.belongsTo(User, { foreignKey: 'userId' });
 
+Organization.hasMany(VoiceCampaign, { foreignKey: 'organizationId' });
+VoiceCampaign.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+User.hasMany(VoiceCampaign, { foreignKey: 'userId' });
+VoiceCampaign.belongsTo(User, { foreignKey: 'userId' });
+
 export {
     User,
     Organization,
     Lead,
     CreditTransaction,
-    BotConfig
+    BotConfig,
+    VoiceCampaign
 };

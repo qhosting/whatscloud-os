@@ -66,6 +66,27 @@ export const Organization = sequelize.define('Organization', {
     subscriptionStatus: {
         type: DataTypes.STRING,
         defaultValue: 'none',
+    },
+    // Asterisk / Issabel AMI
+    amiHost: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    amiPort: {
+        type: DataTypes.INTEGER,
+        defaultValue: 5038,
+    },
+    amiUser: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    amiSecret: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    amiContext: {
+        type: DataTypes.STRING,
+        defaultValue: 'from-internal',
     }
 }, {
     timestamps: true,

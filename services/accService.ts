@@ -128,5 +128,32 @@ export const accService = {
       console.error("[DASHBOARD] Error:", error);
       return null;
     }
+  },
+
+  sendVoiceCampaign: async (config: any, cost: number) => {
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/voice/campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: config.campaignName,
+          type: config.type,
+          content: config.type === 'tts' ? config.ttsText : config.audioFileName,
+          audience: config.audience,
+          cost: cost,
+          scheduledAt: config.scheduledAt,
+          pbxHost: 'issabel.whatscloud.mx' // Default pbx host
+        })
+      });
+      if (!response.ok) throw new Error('Failed to create campaign');
+      return await response.json();
+    } catch (error) {
+      console.error("[VOICE] Error:", error);
+      throw error;
+    }
   }
 };

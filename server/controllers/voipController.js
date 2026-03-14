@@ -1,9 +1,65 @@
 import AmiClient from 'asterisk-manager';
-import { Organization } from '../models/index.js';
+import { Organization, VoiceCampaign, User } from '../models/index.js';
 import { initiateTwilioCall } from '../services/voipService.js';
+import { voiceQueue } from '../queues/voiceQueue.js';
 import logger from '../config/logger.js';
 
 let ami = null;
+
+export const createVoiceCampaign = async (req, res) => {
+    const { name, type, content, audience, cost, scheduledAt, pbxHost } = req.body;
+    const userId = req.user.id;
+    const organizationId = req.user.organizationId;
+
+    if (!name || !type || !content || !audience) {
+        return res.status(400).json({ error: 'Missing required campaign data' });
+    }
+
+    try {
+        const user = await User.findByPk(userId);
+        if (user.credits < cost) {
+            return res.status(403).json({ error: 'Insufficient credits' });
+        }
+
+        // Create Campaign
+        const campaign = await VoiceCampaign.create({
+            name,
+            type,
+            content,
+            audience,
+            cost,
+            scheduledAt,
+            pbxHost,
+            organizationId,
+            userId,
+            totalLeads: audience.length,
+            status: scheduledAt ? 'scheduled' : 'pending'
+        });
+
+        // Deduct credits
+        await user.decrement('credits', { by: cost });
+
+        // Queue for immediate processing if not scheduled
+        if (!scheduledAt) {
+            await voiceQueue.add({ campaignId: campaign.id });
+        } else {
+            const delay = new Date(scheduledAt).getTime() - Date.now();
+            if (delay > 0) {
+                await voiceQueue.add({ campaignId: campaign.id }, { delay });
+            }
+        }
+
+        res.status(201).json({ 
+            message: 'Campaign created successfully', 
+            campaignId: campaign.id,
+            remainingCredits: user.credits - cost
+        });
+
+    } catch (error) {
+        logger.error(`[VOICE_CAMPAIGN] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 // Global AMI fallback (Legacy system-wide config)
 const AMI_HOST = process.env.AMI_HOST?.trim();
