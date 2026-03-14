@@ -4,12 +4,20 @@ import axios from 'axios';
 import logger from '../config/logger.js';
 
 let ai;
-if (process.env.API_KEY) {
-  ai = new GoogleGenAI(process.env.API_KEY);
+const apiKey = process.env.API_KEY?.trim();
+
+if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
+  try {
+    ai = new GoogleGenAI(apiKey);
+    if (process.env.NODE_ENV !== 'test') {
+      logger.info('[WHATSAPP] Gemini AI initialized successfully');
+    }
+  } catch (error) {
+    logger.error(`[WHATSAPP] Failed to initialize Gemini AI: ${error.message}`);
+  }
 } else {
-  // Silent warning for tests to avoid console clutter if needed
   if (process.env.NODE_ENV !== 'test') {
-    console.warn('[WHATSAPP] API_KEY not set. Gemini responses will fail.');
+    logger.warn('[WHATSAPP] API_KEY not set or invalid. Gemini responses will be disabled.');
   }
 }
 

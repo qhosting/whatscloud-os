@@ -23,13 +23,39 @@ export const performBackup = async () => {
   try {
     // 1. DUMP DATABASES
     // Postgres
-    const pgDumpCmd = `PGPASSWORD="${process.env.PG_PASS || 'password'}" pg_dump -h ${process.env.PG_HOST || 'localhost'} -U ${process.env.PG_USER || 'user'} -d ${process.env.PG_DB || 'database'} -f ${path.join(BACKUP_DIR, 'pg_dump.sql')}`;
+    let pgHost = process.env.PG_HOST;
+    let pgUser = process.env.PG_USER;
+    let pgPass = process.env.PG_PASS;
+    let pgDb = process.env.PG_DB;
+    let pgPort = process.env.PG_PORT || '5432';
+
+    // Fallback: Parse DATABASE_URL if individual vars are missing
+    if ((!pgHost || !pgUser || !pgDb) && process.env.DATABASE_URL) {
+      try {
+        const dbUrl = new URL(process.env.DATABASE_URL);
+        pgHost = dbUrl.hostname;
+        pgUser = dbUrl.username;
+        pgPass = dbUrl.password;
+        pgDb = dbUrl.pathname.split('/')[1];
+        pgPort = dbUrl.port || '5432';
+      } catch (e) {
+        console.error('[BACKUP] Failed to parse DATABASE_URL:', e.message);
+      }
+    }
+
+    // Final defaults for safety
+    pgHost = pgHost || 'localhost';
+    pgUser = pgUser || 'user';
+    pgPass = pgPass || 'password';
+    pgDb = pgDb || 'database';
+
+    const pgDumpCmd = `PGPASSWORD="${pgPass}" pg_dump -h ${pgHost} -p ${pgPort} -U ${pgUser} -d ${pgDb} -f ${path.join(BACKUP_DIR, 'pg_dump.sql')}`;
+
+    console.log(`[BACKUP] Dumping PostgreSQL from ${pgHost}:${pgPort}...`);
+    await execPromise(pgDumpCmd).catch(e => console.error('PG Dump Warning:', e.message)); // Warn but continue
 
     // Mongo
-    const mongoDumpCmd = `mongodump --uri="${process.env.MONGO_URL}" --archive=${path.join(BACKUP_DIR, 'mongo_dump.archive')}`;
-
-    console.log('[BACKUP] Dumping PostgreSQL...');
-    await execPromise(pgDumpCmd).catch(e => console.error('PG Dump Warning:', e.message)); // Warn but continue
+    const mongoDumpCmd = `mongodump --uri="${process.env.MONGO_URL || 'mongodb://localhost:27017/database'}" --archive=${path.join(BACKUP_DIR, 'mongo_dump.archive')}`;
 
     console.log('[BACKUP] Dumping MongoDB...');
     await execPromise(mongoDumpCmd).catch(e => console.error('Mongo Dump Warning:', e.message));
