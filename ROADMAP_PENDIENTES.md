@@ -181,6 +181,7 @@
 7. **Dashboard Real-Time:** Conectado frontend con métricas reales de PostgreSQL.
 8. **Migraciones:** Configurado `sequelize-cli` para versiones de base de datos.
 9. **Billing & Recharges:** Sistema OpenPay y SPEI (manual) integrado.
+10. **Neural AI Agents:** Implementado núcleo neural con Memoria a Largo Plazo y persistencia en Postgres.
 
 ### **Pendiente (Siguiente Fase)**
 3. **Secrets:** `.env` no es seguro para producción extremo (usar Vault opcional).

@@ -126,28 +126,19 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
     setInputText('');
     setIsTyping(true);
 
-    // 2. Call Gemini Service with HISTORY & MEMORY
-    const aiResponse = await geminiService.chatWithBot(messages, userMsg.text, config, memory);
+    // 2. Call Neural Agent BACKEND
+    const aiResponse = await geminiService.chatWithAgentBackend(userMsg.text, "simulator-user");
     
     setIsTyping(false);
-
-    let actionTriggered: SmartAction | undefined;
-    if (aiResponse.actionTrigger) {
-      actionTriggered = config.actions.find(a => a.triggerCode === aiResponse.actionTrigger);
-    }
 
     const botMsg: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      text: aiResponse.text || (actionTriggered ? '' : '...'),
-      actionTriggered: actionTriggered,
+      text: aiResponse,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, botMsg]);
-
-    // 3. TRIGGER MEMORY UPDATE (PROTOCOL 719 31)
-    updateHippocampus(userMsg.text, botMsg.text);
   };
 
   const updateHippocampus = async (userText: string, botText: string) => {

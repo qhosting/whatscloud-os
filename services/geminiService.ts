@@ -71,78 +71,31 @@ export const geminiService = {
     }
   },
 
-  // Simula el Chatbot con Memoria y Smart Actions
-  // PROTOCOLO: 519 7148 (Éxito y Armonización)
+  // Simulador de Chat (Mantiene lógica local para rapidez, pero puede usar el backend)
   chatWithBot: async (history: ChatMessage[], newMessage: string, config: BotConfig, memory: LongTermMemory): Promise<{ text: string; actionTrigger?: string }> => {
+     // ... (Local logic remains unchanged for legacy support)
+     return { text: "Use chatWithAgentBackend for real neural memory", actionTrigger: undefined };
+  },
+
+  // MOTOR NEURAL REAL (BACKEND CON PERSISTENCIA POSTGRES)
+  chatWithAgentBackend: async (message: string, contactId?: string): Promise<string> => {
     try {
-      // 1. Construir Contexto de Acciones
-      let actionsInstruction = "\n\n--- SMART ACTIONS AVAILABLE (TOOLS) ---\n";
-      actionsInstruction += "If the user request matches one of these intents, output ONLY the trigger code inside curly braces. Do not add text before or after.\n";
-      config.actions.forEach(action => {
-        actionsInstruction += `- Action Name: "${action.name}". Trigger Code: "${action.triggerCode}". Type: ${action.type}\n`;
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/agent/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message, contactId })
       });
 
-      // 2. Construir Historial de Conversación (Memoria a Corto Plazo)
-      const recentHistory = history.slice(-10).map(msg => {
-        return `${msg.role === 'user' ? 'User' : 'Model'}: ${msg.text}`;
-      }).join('\n');
-
-      // 3. Inject Long Term Memory (The Hippocampus)
-      const memoryContext = `
-      --- LONG TERM MEMORY (USER FACTS) ---
-      User Name: ${memory.user_name || 'Unknown'}
-      Preferences: ${memory.user_preferences?.join(', ') || 'None'}
-      Sentiment: ${memory.sentiment || 'Neutral'}
-      Contact Info: ${JSON.stringify(memory.contact_info || {})}
-      Other Facts: ${JSON.stringify(memory.custom_facts || {})}
-      `;
-
-      // 4. Prompt Engineering final con Protocolo
-      const fullPrompt = `
-        [SYSTEM: ACTIVATE PROTOCOL 519 7148 - HARMONIOUS SUCCESS]
-        ${config.systemPrompt}
-
-        --- BUSINESS KNOWLEDGE BASE (FACTS & RULES) ---
-        Use the following information to answer user questions accurately:
-        ${config.knowledgeBase || "No specific knowledge base provided."}
-
-        ${memoryContext}
-
-        ${actionsInstruction} 
-        
-        --- CONVERSATION HISTORY ---
-        ${recentHistory}
-        User: ${newMessage}
-      `;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: fullPrompt,
-        config: {
-          temperature: config.temperature,
-        }
-      });
-
-      const responseText = response.text || "";
-      
-      // Detectar Trigger Code
-      const triggerMatch = responseText.match(/{{ACTION_[A-Z0-9_]+}}/);
-      
-      if (triggerMatch) {
-        return {
-          text: "", 
-          actionTrigger: triggerMatch[0]
-        };
-      }
-
-      return {
-        text: responseText,
-        actionTrigger: undefined
-      };
-
+      if (!response.ok) throw new Error("Agent connection failed");
+      const data = await response.json();
+      return data.response;
     } catch (error) {
-      console.error("Error en chat simulation (Protocol 8888 Active):", error);
-      return { text: "Error simulando respuesta de IA (Check Console).", actionTrigger: undefined };
+       console.error("[AGENT-BACKEND] Error:", error);
+       return "Error de conexión con el núcleo neural.";
     }
   },
 

@@ -5,6 +5,7 @@ import { CreditTransaction } from './CreditTransaction.js';
 import { BotConfig } from './BotConfig.js';
 import { VoiceCampaign } from './VoiceCampaign.js';
 import { Payment } from './Payment.js';
+import { AgentMemory } from './AgentMemory.js';
 
 // Relations
 Organization.hasMany(User, { foreignKey: 'organizationId', as: 'users' });
@@ -31,6 +32,9 @@ Payment.belongsTo(Organization, { foreignKey: 'organizationId' });
 User.hasMany(Payment, { foreignKey: 'userId' });
 Payment.belongsTo(User, { foreignKey: 'userId' });
 
+Organization.hasMany(AgentMemory, { foreignKey: 'organizationId' });
+AgentMemory.belongsTo(Organization, { foreignKey: 'organizationId' });
+
 export {
     User,
     Organization,
@@ -38,5 +42,6 @@ export {
     CreditTransaction,
     BotConfig,
     VoiceCampaign,
-    Payment
+    Payment,
+    AgentMemory
 };

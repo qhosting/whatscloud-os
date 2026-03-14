@@ -20,6 +20,7 @@ import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
 import { getLeads, getLeadDetail, deleteLead } from './controllers/leadController.js';
 import { requestRecharge, uploadReceipt, approvePayment } from './controllers/paymentController.js';
+import { handleAgentChat } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { getStats } from './controllers/dashboardController.js';
 import cron from 'node-cron';
@@ -150,6 +151,9 @@ app.post('/api/voice/campaign', verifyToken, createVoiceCampaign);
 app.post('/api/payments/recharge', verifyToken, requestRecharge);
 app.post('/api/payments/receipt', verifyToken, uploadReceipt);
 app.post('/api/payments/:paymentId/approve', verifyToken, approvePayment);
+
+// --- AI AGENT ROUTES ---
+app.post('/api/agent/chat', verifyToken, handleAgentChat);
 
 // --- INTEGRATION ROUTES ---
 app.post('/webhook/whatsapp', handleIncomingMessage);
