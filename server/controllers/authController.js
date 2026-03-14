@@ -6,6 +6,33 @@ import logger from '../config/logger.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_123';
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user and organization
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [ACCOUNT_OWNER, AGENT]
+ *               orgName:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ */
 export const register = async (req, res) => {
   const { email, password, role, orgName } = req.body;
 
@@ -60,6 +87,30 @@ export const register = async (req, res) => {
   }
 };
 
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user and get token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ */
 export const login = async (req, res) => {
   const { email, password } = req.body;
 

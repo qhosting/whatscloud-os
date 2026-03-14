@@ -146,7 +146,7 @@
 - [x] Stripe Integration (Backend + Webhooks)
 - [x] Billing Backend Logic
 - [x] Lead & Bot APIs
-- [ ] Swagger API Docs
+- [x] Swagger API Docs (Implementado en /api-docs)
 - [ ] Responsive Design
 - [ ] Onboarding Tutorial
 
@@ -161,7 +161,8 @@
 - [x] Logging Centralizado (Winston + Loki ready)
 - [x] Database Indexing (Optimization)
 - [x] Redis Cache Layer (Integration)
-- [ ] Connection Pooling (PgBouncer)
+- [x] Connection Pooling (Optimizado via pg-pool)
+- [x] Paginación en Endpoints de Leads (/api/leads?page=1)
 - [ ] CDN para Assets
 
 **Entregable:** Sistema monitoreable y escalable horizontalmente. Ready for 10k users.
@@ -179,7 +180,7 @@
 6. **Índices:** Agregados índices clave para `Lead` (niche, city, etc.).
 
 ### **Pendiente (Siguiente Fase)**
-1. **Paginación:** Pendiente en endpoints de leads masivos.
+1. **Frontend Integration:** Conectar el dashboard visual con los nuevos endpoints paginados.
 2. **Migraciones:** Usar `sequelize-cli` para no depender de `.sync()`.
 3. **Secrets:** `.env` no es seguro para producción extremo (usar Vault opcional).
 4. **Frontend Error Boundaries:** Mejorar UX en crashes del cliente.

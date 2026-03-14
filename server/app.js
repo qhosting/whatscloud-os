@@ -25,6 +25,8 @@ import { performBackup } from './services/backupService.js';
 import { validate } from './middleware/validate.js';
 import { registerSchema, loginSchema, scrapeSchema, callSchema, deductionsSchema } from './validations/schemas.js';
 import client from 'prom-client';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
 
 // Create a Registry which registers the metrics
 const registerMetrics = new client.Registry();
@@ -65,6 +67,9 @@ app.get('/metrics', async (req, res) => {
   res.set('Content-Type', registerMetrics.contentType);
   res.end(await registerMetrics.metrics());
 });
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rate Limiter configuration
 const globalLimiter = rateLimit({
@@ -173,6 +178,35 @@ app.get('/api/health', async (req, res) => {
   res.status(statusCode).json(status);
 });
 
+/**
+ * @openapi
+ * /api/scrape:
+ *   post:
+ *     summary: Initiate a scraping job for Google Maps leads
+ *     tags: [Scraping]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [niche, city]
+ *             properties:
+ *               niche:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               limit:
+ *                 type: integer
+ *                 default: 5
+ *     responses:
+ *       200:
+ *         description: Scraping started successfully
+ */
 // PROTECTED ROUTE: SCRAPING (ASYNC QUEUE)
 app.post('/api/scrape', verifyToken, validate(scrapeSchema), async (req, res) => {
   const { niche, city, country, limit = 5 } = req.body;
@@ -199,6 +233,24 @@ app.post('/api/scrape', verifyToken, validate(scrapeSchema), async (req, res) =>
   }
 });
 
+/**
+ * @openapi
+ * /api/scrape/{jobId}:
+ *   get:
+ *     summary: Check status of a scraping job
+ *     tags: [Scraping]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Job status and potentially results
+ */
 // JOB STATUS POLLING
 app.get('/api/scrape/:jobId', verifyToken, async (req, res) => {
   const { jobId } = req.params;
