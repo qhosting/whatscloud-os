@@ -162,28 +162,26 @@ app.get('/api/health', async (req, res) => {
     checks: {
       redis: 'unknown',
       postgres: 'unknown',
-      browser_capability: 'unknown'
+      browser_capability: 'ready'
     }
   };
 
   try {
     const { redisClient } = await import('./config/database.js');
-    if (redisClient.isOpen) status.checks.redis = 'ok';
-    else status.checks.redis = 'disconnected';
+    status.checks.redis = redisClient.isOpen ? 'ok' : 'disconnected';
   } catch (e) { status.checks.redis = 'error'; }
 
   try {
-    const { sequelize } = await import('./config/database.js');
     await sequelize.authenticate();
     status.checks.postgres = 'ok';
-  } catch (e) { status.checks.postgres = 'error'; }
+  } catch (e) { 
+    status.checks.postgres = 'error'; 
+    logger.warn(`[HEALTH] Postgres check failed: ${e.message}`);
+  }
 
-  try {
-    status.checks.browser_capability = 'ready';
-  } catch (e) { status.checks.browser_capability = 'missing_libs'; }
-
-  const statusCode = (status.checks.redis === 'error' || status.checks.postgres === 'error') ? 503 : 200;
-  res.status(statusCode).json(status);
+  // We return 200 even if degraded to prevent Docker from killing the container 
+  // unless the entire process is unresponsive.
+  res.json(status);
 });
 
 /**
