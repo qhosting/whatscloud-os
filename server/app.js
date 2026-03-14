@@ -296,8 +296,12 @@ app.get('/api/dashboard/stats', verifyToken, getStats);
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-app.get(/.*/, (req, res) => {
-  if (req.path.startsWith('/api')) return next();
+// Catch-all route for SPA
+app.get(/.*/, (req, res, next) => {
+  // If it's an API route or has an extension (likely a file that failed to load as static), don't serve index.html
+  if (req.path.startsWith('/api') || req.path.includes('.')) {
+    return next();
+  }
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
