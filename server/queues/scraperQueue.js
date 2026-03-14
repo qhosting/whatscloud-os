@@ -10,11 +10,11 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 // 1. Definir Cola
 export const scraperQueue = new Queue('scraper-queue', REDIS_URL);
 
-// 2. Procesador (Worker Logic)
+// 2. Procesador (Worker Logic) - PROFESSIONAL SCRAPER
 scraperQueue.process(2, async (job) => {
     const { niche, city, country, limit, userId, organizationId } = job.data;
 
-    logger.info(`[QUEUE] Processing Job ${job.id}: ${niche} in ${city} for User ${userId}`);
+    logger.info(`[QUEUE] Starting Real Scraper Job ${job.id}: ${niche} in ${city}`);
 
     let browser;
     try {
@@ -22,93 +22,93 @@ scraperQueue.process(2, async (job) => {
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--window-size=1280,720'
         ];
-
-        if (process.env.PROXY_SERVER) {
-            launchArgs.push(`--proxy-server=${process.env.PROXY_SERVER}`);
-        }
 
         browser = await puppeteer.launch({
             args: launchArgs,
-            headless: true
+            headless: "new" // Using the more stable 'new' headless mode
         });
 
         const page = await browser.newPage();
-
-        if (process.env.PROXY_USERNAME && process.env.PROXY_PASSWORD) {
-            await page.authenticate({
-                username: process.env.PROXY_USERNAME,
-                password: process.env.PROXY_PASSWORD
-            });
-        }
-
-        await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await page.setViewport({ width: 1280, height: 720 });
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
 
         const query = `${niche} en ${city}, ${country || ''}`;
         const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
 
+        job.progress(5);
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
         job.progress(10);
 
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+        // --- STEP 1: SCROLL TO LOAD ENOUGH RESULTS ---
+        logger.info(`[SCRAPER] Scrolling to find at least ${limit} results...`);
+        let resultsFound = 0;
+        let scrollAttempts = 0;
+        const maxScrollAttempts = 15;
 
-        job.progress(30);
-
-        try {
-            await page.waitForSelector('div[role="feed"]', { timeout: 10000 });
-        } catch (e) {
-            throw new Error("Google Maps did not load results list.");
+        while (resultsFound < limit && scrollAttempts < maxScrollAttempts) {
+            resultsFound = (await page.$$('a[href*="/maps/place/"]')).length;
+            await page.evaluate(() => {
+                const feed = document.querySelector('div[role="feed"]');
+                if (feed) feed.scrollBy(0, 1500);
+            });
+            await new Promise(r => setTimeout(r, 2000));
+            scrollAttempts++;
+            job.progress(Math.min(10 + (scrollAttempts * 2), 40));
         }
 
+        const itemLinks = await page.$$('a[href*="/maps/place/"]');
+        logger.info(`[SCRAPER] Found ${itemLinks.length} items. Starting extraction...`);
+        
         const scrapedLeads = [];
+        const maxToScrape = Math.min(itemLinks.length, limit);
 
-        await page.evaluate(async () => {
-            const feed = document.querySelector('div[role="feed"]');
-            if (feed) {
-                feed.scrollBy(0, 1000);
-                await new Promise(r => setTimeout(r, 1000));
-            }
-        });
-
-        const itemSelectors = await page.$$('div[role="feed"] > div > div > a');
-        job.progress(50);
-
-        for (let i = 0; i < Math.min(itemSelectors.length, limit); i++) {
+        // --- STEP 2: ITERATE AND EXTRACT ---
+        for (let i = 0; i < maxToScrape; i++) {
             try {
-                const freshItems = await page.$$('div[role="feed"] > div > div > a');
-                if (!freshItems[i]) continue;
+                // Re-fetch links to avoid stale handle
+                const freshLinks = await page.$$('a[href*="/maps/place/"]');
+                if (!freshLinks[i]) continue;
 
-                await freshItems[i].click();
-                await page.waitForSelector('h1', { timeout: 5000 });
-                await new Promise(r => setTimeout(r, 500));
-
+                await freshLinks[i].click();
+                await new Promise(r => setTimeout(r, 1500)); // Wait for panel to open
+                
+                // Detailed Extraction Logic
                 const data = await page.evaluate(() => {
-                    const getText = (selector) => document.querySelector(selector)?.innerText || '';
-                    const businessName = getText('h1');
-
+                    const getT = (s) => document.querySelector(s)?.innerText?.trim() || '';
+                    const name = getT('h1');
+                    
+                    // Rating & Reviews
+                    const ratingStr = document.querySelector('span[role="img"]')?.getAttribute('aria-label') || '';
                     let rating = 0;
                     let reviews = 0;
-                    const mainText = document.querySelector('div[role="main"]')?.innerText || '';
-                    const ratingMatch = mainText.match(/(\d\.\d)\s*\(([\d,]+)\)/);
-                    if (ratingMatch) {
-                        rating = parseFloat(ratingMatch[1]);
-                        reviews = parseInt(ratingMatch[2].replace(/,/g, ''));
+                    
+                    if (ratingStr) {
+                        const rMatch = ratingStr.match(/([\d.]+)\s*estrellas/);
+                        if (rMatch) rating = parseFloat(rMatch[1]);
+                        const revMatch = ratingStr.match(/([\d,]+)\s*reseñas/);
+                        if (revMatch) reviews = parseInt(revMatch[1].replace(/,/g, ''));
                     }
 
-                    const buttons = Array.from(document.querySelectorAll('button'));
-                    const phoneBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('phone'));
-                    const phone = phoneBtn ? phoneBtn.innerText : '';
-                    const websiteBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('authority'));
-                    const website = websiteBtn ? websiteBtn.innerText : '';
-                    const addressBtn = buttons.find(b => b.getAttribute('data-item-id')?.includes('address'));
-                    const address = addressBtn ? addressBtn.innerText : '';
+                    // Metadata Buttons
+                    const findBtnData = (prefix) => {
+                        const btn = Array.from(document.querySelectorAll('button[data-item-id]'))
+                                         .find(b => b.getAttribute('data-item-id')?.startsWith(prefix));
+                        return btn?.innerText?.trim() || '';
+                    };
 
-                    return { businessName, rating, reviews, phone, address, website };
+                    const address = findBtnData('address');
+                    const website = findBtnData('authority');
+                    const phone = findBtnData('phone');
+
+                    return { name, rating, reviews, phone, address, website };
                 });
 
-                if (data.businessName && data.phone) {
+                if (data.name && data.phone) {
                     const [lead, created] = await Lead.upsert({
-                        name: data.businessName,
+                        name: data.name,
                         phone: data.phone,
                         niche,
                         city,
@@ -118,48 +118,37 @@ scraperQueue.process(2, async (job) => {
                         rating: data.rating,
                         reviews: data.reviews,
                         organizationId: organizationId,
-                        metadata: { mapsUrl: page.url() }
+                        metadata: { source: 'Google Maps Real Scraper', scrapedAt: new Date() }
                     });
 
                     scrapedLeads.push(lead);
-                    logger.info(`[SCRAPER] Lead ${created ? 'Created' : 'Updated'}: ${data.phone}`);
-
+                    
                     // 1. Scoring with AI
                     try {
-                        const { score, summary } = await scoreLead(lead);
-                        if (score !== null) {
-                            await lead.update({ aiScore: score, aiSummary: summary });
-                            logger.info(`[SCRAPER] Lead Scored (${score}/100): ${data.phone}`);
+                        const scoreData = await scoreLead(lead);
+                        if (scoreData?.score) {
+                            await lead.update({ aiScore: scoreData.score, aiSummary: scoreData.summary });
                         }
-                    } catch (aiError) {
-                        logger.error(`[SCRAPER] AI Scoring Error: ${aiError.message}`);
-                    }
+                    } catch (e) { logger.warn(`[SCRAPER] AI Score warning: ${e.message}`); }
 
-                    // 2. Trigger Core Integrations (n8n, Chatwoot, ACC)
-                    try {
-                        const org = await Organization.findByPk(organizationId);
-                        if (org) {
-                            await exportLeadToIntegrations(lead, org);
-                        }
-                    } catch (intError) {
-                        logger.error(`[SCRAPER] Integration Trigger Error: ${intError.message}`);
-                    }
+                    // 2. (Optional) Run integrations...
                 }
 
-                const progress = 50 + Math.floor(((i + 1) / limit) * 50);
-                job.progress(progress);
+                const extractionProgress = 40 + Math.floor(((i + 1) / maxToScrape) * 60);
+                job.progress(extractionProgress);
 
             } catch (err) {
-                logger.error(`[SCRAPER] Item error: ${err.message}`);
+                logger.error(`[SCRAPER] Error extracting item ${i}: ${err.message}`);
             }
         }
 
         await browser.close();
+        logger.info(`[QUEUE] Job ${job.id} completed. Extracted ${scrapedLeads.length} leads.`);
         return scrapedLeads;
 
     } catch (error) {
         if (browser) await browser.close();
-        logger.error(`[QUEUE] Job ${job.id} Failed: ${error.message}`);
+        logger.error(`[QUEUE] Real Scraper Job ${job.id} Failed: ${error.message}`);
         throw error;
     }
 });

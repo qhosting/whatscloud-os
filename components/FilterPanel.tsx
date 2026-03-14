@@ -67,17 +67,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters, o
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Colonia</label>
-          <div className="relative">
-            <Map className="absolute right-3 top-3 text-slate-400" size={16} />
-            <input 
-              type="text" 
-              name="colonia"
-              value={filters.colonia}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-wc-green focus:ring-2 focus:ring-wc-green/20 outline-none text-sm font-medium transition-all"
-            />
-          </div>
+          <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Cantidad (Límite)</label>
+          <input 
+            type="number" 
+            name="limit"
+            value={filters.limit}
+            onChange={handleChange}
+            min="1"
+            max="100"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-wc-blue focus:ring-2 focus:ring-wc-blue/10 outline-none text-sm font-medium transition-all"
+          />
         </div>
       </div>
 

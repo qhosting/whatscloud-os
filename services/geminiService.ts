@@ -7,16 +7,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const geminiService = {
   // Motor de Scraping Real (Puppeteer en Servidor)
-  // PROTOCOLO: 318 798 (Abundancia Financiera y Flujo)
-  scrapeLeads: async (filters: SearchFilters): Promise<Lead[]> => {
+  scrapeLeads: async (filters: SearchFilters, onProgress?: (p: number) => void): Promise<Lead[]> => {
     try {
       console.log("[SCRAPER] Iniciando protocolo de extracción real...");
 
       const token = localStorage.getItem('wc_auth_token');
-      if (!token) {
-        alert("Sesión expirada. Por favor recarga e inicia sesión.");
-        throw new Error("No Auth Token");
-      }
+      if (!token) throw new Error("No Auth Token");
 
       // 1. Start Job
       const startResponse = await fetch('/api/scrape', {
@@ -29,14 +25,13 @@ export const geminiService = {
           niche: filters.niche,
           city: filters.city,
           country: filters.country,
-          limit: 5
+          limit: filters.limit || 10 // Aumentamos el límite por defecto
         })
       });
 
       if (!startResponse.ok) throw new Error("Failed to start scraping job");
 
       const { jobId } = await startResponse.json();
-      console.log(`[SCRAPER] Job Started: ${jobId}. Polling...`);
 
       // 2. Poll for Results
       return new Promise((resolve, reject) => {
@@ -47,7 +42,7 @@ export const geminiService = {
                   });
                   const status = await pollResponse.json();
 
-                  console.log(`[SCRAPER] Job Status: ${status.state} (${status.progress}%)`);
+                  if (onProgress) onProgress(status.progress || 0);
 
                   if (status.state === 'completed') {
                       clearInterval(interval);
@@ -56,18 +51,16 @@ export const geminiService = {
                       clearInterval(interval);
                       reject(new Error(status.error || "Scraping failed"));
                   }
-                  // continue waiting if active/waiting/delayed
               } catch (e) {
                   clearInterval(interval);
                   reject(e);
               }
-          }, 2000); // Check every 2s
+          }, 1500); // Polling más rápido
       });
 
     } catch (error) {
-      console.error("Error en scraping real (Protocol 8888 Active):", error);
-      alert("Error conectando con el servidor de scraping. Ver consola.");
-      return [];
+      console.error("Error en scraping real:", error);
+      throw error;
     }
   },
 

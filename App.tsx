@@ -30,8 +30,9 @@ const App: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [isScraping, setIsScraping] = useState(false);
-  const [filters, setFilters] = useState<SearchFilters>({ niche: '', country: 'México', state: '', city: '', colonia: '' });
+  const [filters, setFilters] = useState<SearchFilters>({ niche: '', country: 'México', state: '', city: '', colonia: '', limit: 10 });
   const [viewFilters, setViewFilters] = useState<ViewFilters>({ minRating: 0, requireEmail: false, sortBy: 'relevance' });
+  const [scanProgress, setScanProgress] = useState(0);
   const [infraStatus] = useState({ redis: 'online', db: 'online' });
   const [stats, setStats] = useState<any>(null);
   const [activeProtocol, setActiveProtocol] = useState<SystemProtocol | null>(null);
@@ -94,9 +95,10 @@ const App: React.FC = () => {
       alert("Créditos insuficientes en WhatsCloud.MX");
       return;
     }
+    setScanProgress(0);
     setIsScraping(true);
     try {
-      const newLeads = await geminiService.scrapeLeads(filters);
+      const newLeads = await geminiService.scrapeLeads(filters, (p) => setScanProgress(p));
       if (newLeads.length > 0) {
         setLeads(newLeads);
         // Sincronización real con la DB vía N8N
@@ -364,7 +366,28 @@ const App: React.FC = () => {
                         )}
                     </div>
                     <FilterPanel filters={filters} setFilters={setFilters} onSearch={handleSearch} isLoading={isScraping} />
-                    {leads.length > 0 && (
+                    
+                    {isScraping && (
+                        <div className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 shadow-2xl flex flex-col items-center gap-6 animate-pulse">
+                            <div className="relative w-32 h-32 flex items-center justify-center">
+                                <Activity size={48} className="text-wc-blue absolute animate-ping opacity-20" />
+                                <div className="text-2xl font-black text-slate-900 z-10">{scanProgress}%</div>
+                                <svg className="absolute w-full h-full -rotate-90">
+                                    <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
+                                    <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-wc-blue" strokeDasharray={364} strokeDashoffset={364 - (364 * scanProgress) / 100} strokeLinecap="round" />
+                                </svg>
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-xl font-bold text-slate-800">Escaneando Cluster Google Maps</h3>
+                                <p className="text-sm text-slate-500 mt-1">Extraídos leads reales de <strong>{filters.niche}</strong> en <strong>{filters.city}</strong>.</p>
+                            </div>
+                            <div className="w-full max-w-md h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-wc-gradient transition-all duration-500" style={{ width: `${scanProgress}%` }}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {leads.length > 0 && !isScraping && (
                         <div className="space-y-6">
                              <InsightsPanel leads={leads} city={filters.city || 'Mercado Global'} />
                              <PostProcessingToolbar filters={viewFilters} setFilters={setViewFilters} totalResults={leads.length} visibleResults={processedLeads.length} />

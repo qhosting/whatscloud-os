@@ -57,6 +57,7 @@ export interface SearchFilters {
   state: string;
   city: string;
   colonia: string;
+  limit?: number; // New optional limit
 }
 
 // Strict ACC Integration Structure
