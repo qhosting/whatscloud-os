@@ -179,9 +179,10 @@
 5. **Healthcheck:** Mejorado para verificar Postgres y Redis.
 6. **Índices:** Agregados índices clave para `Lead` (niche, city, etc.).
 7. **Dashboard Real-Time:** Conectado frontend con métricas reales de PostgreSQL.
+8. **Migraciones:** Configurado `sequelize-cli` para versiones de base de datos.
+9. **Billing & Recharges:** Sistema OpenPay y SPEI (manual) integrado.
 
 ### **Pendiente (Siguiente Fase)**
-1. **Migraciones:** Usar `sequelize-cli` para no depender de `.sync()`.
 3. **Secrets:** `.env` no es seguro para producción extremo (usar Vault opcional).
 4. **Frontend Error Boundaries:** Mejorar UX en crashes del cliente.
 

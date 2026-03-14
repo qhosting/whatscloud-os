@@ -11,6 +11,7 @@ import { LeadCard } from './components/LeadCard';
 import { BotBuilder } from './components/BotBuilder';
 import { SMSReminder } from './components/SMSReminder';
 import { VoiceCampaigns } from './components/VoiceCampaigns';
+import { BillingModule } from './components/BillingModule';
 import { ConnectionsModule } from './components/ConnectionsModule';
 import { AdminPanel } from './components/AdminPanel';
 import { InsightsPanel } from './components/InsightsPanel';
@@ -18,10 +19,10 @@ import { PostProcessingToolbar, ViewFilters } from './components/PostProcessingT
 import { LandingPage } from './components/LandingPage';
 
 import { 
-  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu
+  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet
 } from 'lucide-react';
 
-type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel';
+type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
@@ -215,6 +216,7 @@ const App: React.FC = () => {
             <SidebarItem icon={<MessageSquare size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<MessageCircle size={18} />} label="SMS Reminder" active={activeModule === 'SMSReminder'} onClick={() => setActiveModule('SMSReminder')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<PhoneCall size={18} />} label="VoIP & PBX" active={activeModule === 'VoiceCampaigns'} onClick={() => setActiveModule('VoiceCampaigns')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<Wallet size={18} />} label="Facturación" active={activeModule === 'Billing'} onClick={() => setActiveModule('Billing')} setIsSidebarOpen={setIsSidebarOpen} />
             <div className="pt-4 border-t border-white/5 mt-2">
               <SidebarItem icon={<Radio size={18} />} label="Conexiones" active={activeModule === 'Connections'} onClick={() => setActiveModule('Connections')} setIsSidebarOpen={setIsSidebarOpen} />
               {profile.role === 'SUPER_ADMIN' && <SidebarItem icon={<Shield size={18} className="text-yellow-400" />} label="GOD MODE" active={activeModule === 'AdminPanel'} onClick={() => setActiveModule('AdminPanel')} setIsSidebarOpen={setIsSidebarOpen} />}
@@ -289,10 +291,13 @@ const App: React.FC = () => {
                   </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 shadow-inner group">
+                <button 
+                    onClick={() => setActiveModule('Billing')}
+                    className="flex items-center gap-2 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 shadow-inner group hover:bg-white hover:border-wc-blue/30 transition-all active:scale-95"
+                >
                     <CreditCard size={14} className="text-wc-blue group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-bold text-slate-700">{profile.credits > 9999 ? 'UNLIMITED' : `${profile.credits} CR`}</span>
-                </div>
+                </button>
                 <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-slate-400">
                     <Server size={12} className="text-wc-green" /> CLUSTER: WHATSCLOUD-MX-PROD
                 </div>
@@ -456,6 +461,23 @@ const App: React.FC = () => {
                  setProfile(prev => prev ? {...prev, pbxExtension: ext} : null);
              }} />}
              {activeModule === 'AdminPanel' && <AdminPanel onSyncACC={() => {}} />}
+             {activeModule === 'Billing' && <BillingModule 
+                currentCredits={profile.credits} 
+                onRecharge={async (amount, method) => {
+                  try {
+                    const res = await accService.rechargeCredits(amount, method);
+                    if (res?.status === 'success') {
+                      setProfile(prev => prev ? {...prev, credits: prev.credits + amount} : null);
+                    }
+                  } catch (e) {
+                    console.error("Billing Error", e);
+                  }
+                }} 
+                onUploadReceipt={async (paymentId, url) => {
+                  await accService.uploadPaymentReceipt(paymentId, url);
+                  alert("Comprobante subido. Tu saldo se actualizará tras la validación.");
+                }} 
+              />}
           </main>
       </div>
     </div>

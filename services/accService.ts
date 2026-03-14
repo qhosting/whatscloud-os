@@ -155,5 +155,43 @@ export const accService = {
       console.error("[VOICE] Error:", error);
       throw error;
     }
+  },
+
+  rechargeCredits: async (amount: number, method: string, token?: string, deviceSessionId?: string) => {
+    try {
+      const tokenAuth = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/payments/recharge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokenAuth}`
+        },
+        body: JSON.stringify({ amount, method, token, deviceSessionId })
+      });
+      if (!response.ok) throw new Error('Payment failed');
+      return await response.json();
+    } catch (error) {
+       console.error("[PAYMENT] Error:", error);
+       throw error;
+    }
+  },
+
+  uploadPaymentReceipt: async (paymentId: string, receiptUrl: string) => {
+    try {
+      const tokenAuth = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/payments/receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokenAuth}`
+        },
+        body: JSON.stringify({ paymentId, receiptUrl })
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return await response.json();
+    } catch (error) {
+       console.error("[RECEIPT] Error:", error);
+       throw error;
+    }
   }
 };

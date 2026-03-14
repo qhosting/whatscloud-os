@@ -54,12 +54,8 @@ export const Organization = sequelize.define('Organization', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // Stripe / Billing
-    stripeCustomerId: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    stripeSubscriptionId: {
+    // OpenPay / Billing
+    openpayCustomerId: {
         type: DataTypes.STRING,
         allowNull: true,
     },

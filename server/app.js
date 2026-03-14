@@ -19,6 +19,7 @@ import { initiateCall, createVoiceCampaign } from './controllers/voipController.
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
 import { getLeads, getLeadDetail, deleteLead } from './controllers/leadController.js';
+import { requestRecharge, uploadReceipt, approvePayment } from './controllers/paymentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { getStats } from './controllers/dashboardController.js';
 import cron from 'node-cron';
@@ -144,6 +145,11 @@ import { handleN8nIncoming } from './services/webhookService.js';
 // --- VOIP & CAMPAIGN ROUTES ---
 app.post('/api/call', verifyToken, initiateCall);
 app.post('/api/voice/campaign', verifyToken, createVoiceCampaign);
+
+// --- PAYMENT ROUTES ---
+app.post('/api/payments/recharge', verifyToken, requestRecharge);
+app.post('/api/payments/receipt', verifyToken, uploadReceipt);
+app.post('/api/payments/:paymentId/approve', verifyToken, approvePayment);
 
 // --- INTEGRATION ROUTES ---
 app.post('/webhook/whatsapp', handleIncomingMessage);

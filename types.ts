@@ -196,3 +196,16 @@ export interface ChatwootChannel {
   inboxToken?: string;
   webhookStatus: 'healthy' | 'error';
 }
+
+// --- BILLING / PAYMENTS ---
+export interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  method: 'OPENPAY' | 'SPEI' | 'CARD' | 'CASH';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  externalId?: string;
+  receiptUrl?: string;
+  creditsAdded: number;
+  createdAt: string;
+}
