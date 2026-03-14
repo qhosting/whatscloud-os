@@ -18,7 +18,7 @@ import { PostProcessingToolbar, ViewFilters } from './components/PostProcessingT
 import { LandingPage } from './components/LandingPage';
 
 import { 
-  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network
+  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu
 } from 'lucide-react';
 
 type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel';
@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [infraStatus] = useState({ redis: 'online', db: 'online' });
   const [stats, setStats] = useState<any>(null);
   const [activeProtocol, setActiveProtocol] = useState<SystemProtocol | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Manejo de Login Exitoso
   const handleLoginSuccess = (userProfile: ACCProfile) => {
@@ -191,7 +192,10 @@ const App: React.FC = () => {
     <div className="min-h-screen flex font-sans bg-slate-50 selection:bg-wc-blue selection:text-white">
       
       {/* SIDEBAR CORPORATIVO */}
-      <aside className="hidden md:flex w-64 flex-col bg-slate-900 text-white fixed h-full z-20 shadow-2xl border-r border-white/5">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl border-r border-white/5 md:translate-x-0 flex flex-col
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         <div className="p-6 border-b border-white/5 bg-slate-950/20">
            <div className="flex items-center gap-2 mb-2">
                <Hexagon size={16} className="text-yellow-500" fill="currentColor" />
@@ -206,16 +210,24 @@ const App: React.FC = () => {
         </div>
         
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <SidebarItem icon={<Activity size={18} />} label="Tablero Principal" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} />
-            <SidebarItem icon={<Search size={18} />} label="Lead Scrapper" active={activeModule === 'LeadScrapper'} onClick={() => setActiveModule('LeadScrapper')} />
-            <SidebarItem icon={<MessageSquare size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} />
-            <SidebarItem icon={<MessageCircle size={18} />} label="SMS Reminder" active={activeModule === 'SMSReminder'} onClick={() => setActiveModule('SMSReminder')} />
-            <SidebarItem icon={<PhoneCall size={18} />} label="VoIP & PBX" active={activeModule === 'VoiceCampaigns'} onClick={() => setActiveModule('VoiceCampaigns')} />
+            <SidebarItem icon={<Activity size={18} />} label="Tablero Principal" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<Search size={18} />} label="Lead Scrapper" active={activeModule === 'LeadScrapper'} onClick={() => setActiveModule('LeadScrapper')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<MessageSquare size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<MessageCircle size={18} />} label="SMS Reminder" active={activeModule === 'SMSReminder'} onClick={() => setActiveModule('SMSReminder')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<PhoneCall size={18} />} label="VoIP & PBX" active={activeModule === 'VoiceCampaigns'} onClick={() => setActiveModule('VoiceCampaigns')} setIsSidebarOpen={setIsSidebarOpen} />
             <div className="pt-4 border-t border-white/5 mt-2">
-              <SidebarItem icon={<Radio size={18} />} label="Conexiones" active={activeModule === 'Connections'} onClick={() => setActiveModule('Connections')} />
-              {profile.role === 'SUPER_ADMIN' && <SidebarItem icon={<Shield size={18} className="text-yellow-400" />} label="GOD MODE" active={activeModule === 'AdminPanel'} onClick={() => setActiveModule('AdminPanel')} />}
+              <SidebarItem icon={<Radio size={18} />} label="Conexiones" active={activeModule === 'Connections'} onClick={() => setActiveModule('Connections')} setIsSidebarOpen={setIsSidebarOpen} />
+              {profile.role === 'SUPER_ADMIN' && <SidebarItem icon={<Shield size={18} className="text-yellow-400" />} label="GOD MODE" active={activeModule === 'AdminPanel'} onClick={() => setActiveModule('AdminPanel')} setIsSidebarOpen={setIsSidebarOpen} />}
             </div>
         </nav>
+
+        {/* MOBILE CLOSE BUTTON */}
+        <button 
+          className="md:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <X size={20} />
+        </button>
 
         {/* STATUS WIDGET */}
         <div className="p-4 bg-black/40 m-4 rounded-xl border border-white/5 font-mono shadow-inner">
@@ -251,14 +263,30 @@ const App: React.FC = () => {
         </div>
       </aside>
 
+      {/* MOBILE OVERLAY */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-          <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-10 border-b border-slate-200 h-16 flex items-center justify-between px-8 shadow-sm">
-              <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
-                 <Hexagon size={14} className="text-wc-blue" />
-                 <span>/</span>
-                 <span className="text-slate-800 font-black tracking-tight uppercase text-xs">{activeModule}</span>
-                 {profile.role === 'SUPER_ADMIN' && <span className="ml-2 bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded shadow-sm">ROOT ACCESS</span>}
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen w-full overflow-hidden">
+          <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-8 shadow-sm">
+              <div className="flex items-center gap-3">
+                  <button 
+                    className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    onClick={() => setIsSidebarOpen(true)}
+                  >
+                      <Menu size={24} />
+                  </button>
+                  <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                     <Hexagon size={14} className="text-wc-blue" />
+                     <span className="hidden sm:inline">/</span>
+                     <span className="text-slate-800 font-black tracking-tight uppercase text-xs">{activeModule}</span>
+                     {profile.role === 'SUPER_ADMIN' && <span className="ml-2 hidden lg:inline bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded shadow-sm">ROOT ACCESS</span>}
+                  </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 shadow-inner group">
@@ -437,9 +465,12 @@ const App: React.FC = () => {
   );
 };
 
-const SidebarItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
+const SidebarItem = ({ icon, label, active, onClick, setIsSidebarOpen }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void, setIsSidebarOpen?: (val: boolean) => void }) => (
     <button 
-      onClick={onClick} 
+      onClick={() => {
+        onClick();
+        if (setIsSidebarOpen) setIsSidebarOpen(false);
+      }} 
       className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-bold text-sm ${active ? 'bg-wc-gradient text-white shadow-lg shadow-wc-blue/20 translate-x-1' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
     >
         {icon} <span className="tracking-tight">{label}</span>

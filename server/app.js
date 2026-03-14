@@ -117,8 +117,7 @@ if (process.env.NODE_ENV !== 'test') {
   (async () => {
     try {
       await sequelize.authenticate();
-      await sequelize.sync();
-      logger.info('PostgreSQL Connected & Synced');
+      logger.info('PostgreSQL Connected');
     } catch (e) { logger.error(`Postgres Connection Failed: ${e.message}`); }
 
     await connectMongo();
