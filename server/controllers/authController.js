@@ -62,7 +62,8 @@ export const register = async (req, res) => {
       email,
       password_hash,
       role: role || 'ACCOUNT_OWNER',
-      organizationId
+      organizationId,
+      credits: 100 // WELCOME BONUS: Give 100 credits to start testing
     }, { transaction: t });
 
     await t.commit();
