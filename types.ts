@@ -23,6 +23,7 @@ export interface Lead {
   reviews?: number;
   mapsUrl?: string;
   status: 'new' | 'exported_wc' | 'exported_crm';
+  metadata?: any;
   // Social Media Recon (New)
   socialMedia?: {
     facebook?: string;

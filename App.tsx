@@ -178,8 +178,25 @@ const App: React.FC = () => {
   };
 
   const exportLeads = async () => {
-    if (selectedLeads.size === 0) return;
-    alert(`Exportando ${selectedLeads.size} leads a CRM Corporativo...`);
+    try {
+        const token = localStorage.getItem('wc_auth_token');
+        const res = await fetch('/api/leads/export', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Export failed');
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `whatscloud_leads_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    } catch (e) {
+        console.error("Export Error", e);
+        alert("Error al exportar leads.");
+    }
   };
 
   const processedLeads = useMemo(() => {
@@ -313,37 +330,57 @@ const App: React.FC = () => {
                     <h1 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">Dashboard <span className="text-wc-blue">Real-Time</span></h1>
                     
                     {/* STATS GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <StatCard title="Total Leads" value={stats?.summary.totalLeads || 0} icon={<Database className="text-wc-blue" />} />
                         <StatCard title="Alta Calidad" value={stats?.summary.highQualityLeads || 0} icon={<Zap className="text-wc-green" />} />
-                        <StatCard title="Hoy" value={stats?.summary.recentLeads || 0} icon={<Activity className="text-wc-purple" />} />
+                        <StatCard title="ROI Potencial" value={`$${stats?.summary.estimatedROI.toLocaleString() || 0}`} icon={<Activity className="text-wc-purple" />} />
                         <StatCard title="Créditos" value={profile.credits} icon={<CreditCard className="text-amber-500" />} />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                            <h3 className="font-bold text-slate-800 mb-4">Top Nichos</h3>
-                            <div className="space-y-4">
+                            <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <Search size={18} className="text-wc-blue" /> Dominancia por Nicho
+                            </h3>
+                            <div className="space-y-6">
                                 {stats?.charts.leadsByNiche.map((n: any) => (
-                                    <div key={n.niche} className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-600 font-medium capitalize">{n.niche}</span>
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-wc-blue" 
-                                                    style={{ width: `${(n.count / stats.summary.totalLeads) * 100}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-xs font-bold text-slate-900">{n.count}</span>
+                                    <div key={n.niche} className="group">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-black text-slate-700 uppercase tracking-tighter">{n.niche}</span>
+                                            <span className="text-xs font-bold text-wc-blue bg-wc-blue/10 px-2 py-0.5 rounded-full">{n.count} leads</span>
+                                        </div>
+                                        <div className="h-2.5 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                                            <div 
+                                                className="h-full bg-wc-gradient transform origin-left transition-transform duration-1000 ease-out" 
+                                                style={{ width: `${(n.count / stats.summary.totalLeads) * 100}%` }}
+                                            ></div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-                            <Cloud size={48} className="text-slate-200 mb-4" />
-                            <h3 className="font-bold text-slate-800">Sincronización Cloud Activa</h3>
-                            <p className="text-sm text-slate-500 max-w-[250px] mt-2">Toda tu data está persistida en PostgreSQL 16 y respaldada en Google Drive.</p>
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                             <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <Settings size={18} className="text-wc-green" /> Distribución AI Scoring
+                             </h3>
+                             <div className="flex items-end justify-between h-48 gap-4 px-4 pb-4">
+                                {stats?.charts.scoreDistribution.map((d: any) => (
+                                   <div key={d.name} className="flex-1 flex flex-col items-center gap-2">
+                                      <div 
+                                        className="w-full bg-slate-100 rounded-t-lg transition-all duration-700 relative group overflow-hidden" 
+                                        style={{ height: `${(d.value / (Math.max(...stats.charts.scoreDistribution.map((v:any) => v.value)) || 1)) * 100}%`, minHeight: '4px' }}
+                                      >
+                                         <div className="absolute inset-x-0 bottom-0 bg-wc-gradient-hover opacity-20 group-hover:opacity-100 transition-opacity"></div>
+                                         {d.value > 0 && (
+                                           <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-500">
+                                             {d.value}
+                                           </span>
+                                         )}
+                                      </div>
+                                      <span className="text-[10px] font-bold text-slate-400 rotate-45 lg:rotate-0 mt-2">{d.name}</span>
+                                   </div>
+                                ))}
+                             </div>
                         </div>
                     </div>
                 </div>

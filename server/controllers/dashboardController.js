@@ -41,28 +41,53 @@ export const getStats = async (req, res) => {
         const user = await User.findByPk(req.user.id);
         const credits = user?.credits || 0;
 
-        // 5. Leads by Niche (Top 5)
-        const leadsByNiche = await Lead.findAll({
-            where: { organizationId },
+        // 6. Lead Volume Last 7 Days (Time Series)
+        const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        const leadVolumeHistory = await Lead.findAll({
+            where: {
+                organizationId,
+                createdAt: { [sequelize.Sequelize.Op.gte]: new Date(Date.now() - SEVEN_DAYS) }
+            },
             attributes: [
-                'niche',
+                [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
                 [sequelize.fn('COUNT', sequelize.col('id')), 'count']
             ],
-            group: ['niche'],
-            order: [[sequelize.literal('count'), 'DESC']],
-            limit: 5,
+            group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+            order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
             raw: true
         });
+
+        // 7. AI Score Distribution
+        const scoreRanges = [
+            { label: '0-20', min: 0, max: 20 },
+            { label: '21-40', min: 21, max: 40 },
+            { label: '41-60', min: 41, max: 60 },
+            { label: '61-80', min: 61, max: 80 },
+            { label: '81-100', min: 81, max: 100 }
+        ];
+
+        const scoreDistribution = await Promise.all(scoreRanges.map(async (range) => {
+            const count = await Lead.count({
+                where: {
+                    organizationId,
+                    aiScore: { [sequelize.Sequelize.Op.between]: [range.min, range.max] }
+                }
+            });
+            return { name: range.label, value: count };
+        }));
 
         res.json({
             summary: {
                 totalLeads,
                 highQualityLeads,
                 recentLeads,
-                creditsRemaining: credits
+                creditsRemaining: credits,
+                estimatedROI: highQualityLeads * 250 // Simulated: Each HQ Lead worth $250
             },
             charts: {
-                leadsByNiche
+                leadsByNiche,
+                leadVolumeHistory,
+                scoreDistribution
             }
         });
     } catch (e) {

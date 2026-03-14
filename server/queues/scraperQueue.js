@@ -73,14 +73,13 @@ scraperQueue.process(2, async (job) => {
                 if (!freshLinks[i]) continue;
 
                 await freshLinks[i].click();
-                await new Promise(r => setTimeout(r, 1500)); // Wait for panel to open
+                await new Promise(r => setTimeout(r, 2000)); // Wait for panel to open
                 
                 // Detailed Extraction Logic
                 const data = await page.evaluate(() => {
                     const getT = (s) => document.querySelector(s)?.innerText?.trim() || '';
                     const name = getT('h1');
                     
-                    // Rating & Reviews
                     const ratingStr = document.querySelector('span[role="img"]')?.getAttribute('aria-label') || '';
                     let rating = 0;
                     let reviews = 0;
@@ -92,7 +91,6 @@ scraperQueue.process(2, async (job) => {
                         if (revMatch) reviews = parseInt(revMatch[1].replace(/,/g, ''));
                     }
 
-                    // Metadata Buttons
                     const findBtnData = (prefix) => {
                         const btn = Array.from(document.querySelectorAll('button[data-item-id]'))
                                          .find(b => b.getAttribute('data-item-id')?.startsWith(prefix));
@@ -107,6 +105,34 @@ scraperQueue.process(2, async (job) => {
                 });
 
                 if (data.name && data.phone) {
+                    let socialLinks = {};
+
+                    // --- SOCIAL RECON (Visit Website if exists) ---
+                    if (data.website && data.website.includes('.')) {
+                        try {
+                            const webPage = await browser.newPage();
+                            await webPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+                            
+                            const targetUrl = data.website.startsWith('http') ? data.website : `http://${data.website}`;
+                            logger.info(`[SOCIAL-RECON] Visiting ${targetUrl}`);
+                            
+                            await webPage.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 15000 });
+                            
+                            socialLinks = await webPage.evaluate(() => {
+                                const links = Array.from(document.querySelectorAll('a[href]')).map(a => a.href.toLowerCase());
+                                return {
+                                    facebook: links.find(l => l.includes('facebook.com/')) || null,
+                                    instagram: links.find(l => l.includes('instagram.com/')) || null,
+                                    linkedin: links.find(l => l.includes('linkedin.com/')) || null,
+                                    twitter: links.find(l => l.includes('twitter.com/') || l.includes('x.com/')) || null
+                                };
+                            });
+                            await webPage.close();
+                        } catch (webErr) {
+                            logger.warn(`[SOCIAL-RECON] Failed for ${data.website}: ${webErr.message}`);
+                        }
+                    }
+
                     const [lead, created] = await Lead.upsert({
                         name: data.name,
                         phone: data.phone,
@@ -118,7 +144,11 @@ scraperQueue.process(2, async (job) => {
                         rating: data.rating,
                         reviews: data.reviews,
                         organizationId: organizationId,
-                        metadata: { source: 'Google Maps Real Scraper', scrapedAt: new Date() }
+                        metadata: { 
+                            source: 'Google Maps Real Scraper', 
+                            scrapedAt: new Date(),
+                            socials: socialLinks 
+                        }
                     });
 
                     scrapedLeads.push(lead);
@@ -130,8 +160,6 @@ scraperQueue.process(2, async (job) => {
                             await lead.update({ aiScore: scoreData.score, aiSummary: scoreData.summary });
                         }
                     } catch (e) { logger.warn(`[SCRAPER] AI Score warning: ${e.message}`); }
-
-                    // 2. (Optional) Run integrations...
                 }
 
                 const extractionProgress = 40 + Math.floor(((i + 1) / maxToScrape) * 60);

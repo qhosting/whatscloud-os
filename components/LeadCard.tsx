@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lead } from '../types';
-import { MapPin, Phone, Mail, Building2, CheckCircle, Star, ExternalLink, BrainCircuit, Loader2, PhoneCall, Facebook, Instagram, Linkedin, Globe } from 'lucide-react';
+import { MapPin, Phone, Mail, Building2, CheckCircle, Star, ExternalLink, BrainCircuit, Loader2, PhoneCall, Facebook, Instagram, Linkedin, Globe, Zap } from 'lucide-react';
 
 interface LeadCardProps {
   lead: Lead;
@@ -114,12 +114,21 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
             </div>
             
             {/* Social Media Row */}
-            {lead.socialMedia && (
-                <div className="flex gap-2 mt-2 pt-2 border-t border-slate-50">
-                    {lead.socialMedia.facebook && <a href={lead.socialMedia.facebook} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-600 hover:scale-110 transition-transform"><Facebook size={14} /></a>}
-                    {lead.socialMedia.instagram && <a href={lead.socialMedia.instagram} target="_blank" onClick={(e) => e.stopPropagation()} className="text-pink-600 hover:scale-110 transition-transform"><Instagram size={14} /></a>}
-                    {lead.socialMedia.linkedin && <a href={lead.socialMedia.linkedin} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-800 hover:scale-110 transition-transform"><Linkedin size={14} /></a>}
-                    {lead.socialMedia.website && <a href={lead.socialMedia.website} target="_blank" onClick={(e) => e.stopPropagation()} className="text-slate-600 hover:scale-110 transition-transform"><Globe size={14} /></a>}
+            {(lead.socialMedia || lead.metadata?.socials) && (
+                <div className="flex gap-3 mt-2 pt-2 border-t border-slate-50">
+                    {/* Combine links from both sources */}
+                    {(() => {
+                        const s = { ...lead.socialMedia, ...lead.metadata?.socials };
+                        return (
+                            <>
+                                {s.facebook && <a href={s.facebook} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-600 hover:scale-125 transition-transform" title="Facebook"><Facebook size={14} /></a>}
+                                {s.instagram && <a href={s.instagram} target="_blank" onClick={(e) => e.stopPropagation()} className="text-pink-600 hover:scale-125 transition-transform" title="Instagram"><Instagram size={14} /></a>}
+                                {s.linkedin && <a href={s.linkedin} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-800 hover:scale-125 transition-transform" title="LinkedIn"><Linkedin size={14} /></a>}
+                                {s.twitter && <a href={s.twitter} target="_blank" onClick={(e) => e.stopPropagation()} className="text-slate-800 hover:scale-125 transition-transform" title="Twitter/X"><Zap size={14} /></a>}
+                                {s.website && <a href={s.website} target="_blank" onClick={(e) => e.stopPropagation()} className="text-wc-blue hover:scale-125 transition-transform" title="Sitio Web"><Globe size={14} /></a>}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 

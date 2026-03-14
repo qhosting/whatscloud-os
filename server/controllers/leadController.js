@@ -109,6 +109,54 @@ export const getLeadDetail = async (req, res) => {
  *       200:
  *         description: Lead deleted successfully
  */
+/**
+ * @openapi
+ * /api/leads/export:
+ *   get:
+ *     summary: Export all organization leads as CSV
+ *     tags: [Leads]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: CSV file download
+ */
+export const exportLeads = async (req, res) => {
+    try {
+        const leads = await Lead.findAll({
+            where: { organizationId: req.user.organizationId },
+            order: [['createdAt', 'DESC']]
+        });
+
+        // Simple CSV Generation
+        const headers = ["Nombre", "Teléfono", "Nicho", "Ciudad", "Website", "Rating", "Reviews", "AI Score", "Facebook", "Instagram"];
+        const rows = leads.map(l => {
+            const socials = l.metadata?.socials || {};
+            return [
+                `"${l.name || ''}"`,
+                `"${l.phone || ''}"`,
+                `"${l.niche || ''}"`,
+                `"${l.city || ''}"`,
+                `"${l.website || ''}"`,
+                l.rating || 0,
+                l.reviews || 0,
+                l.aiScore || 0,
+                `"${socials.facebook || ''}"`,
+                `"${socials.instagram || ''}"`
+            ].join(",");
+        });
+
+        const csvContent = [headers.join(","), ...rows].join("\n");
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=whatscloud-leads.csv');
+        res.status(200).send(csvContent);
+
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const deleteLead = async (req, res) => {
     const { id } = req.params;
     try {
