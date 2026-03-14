@@ -2,13 +2,21 @@ import { GoogleGenAI } from "@google/genai";
 import { AgentMemory, Lead, Organization } from '../models/index.js';
 import logger from '../config/logger.js';
 
-const ai = new GoogleGenAI(process.env.API_KEY);
+let ai = null;
 
 /**
  * Neural Agent Core: Handles conversation with memory and tool use.
  */
 export const processAgentMessage = async (organizationId, contactIdentifier, userMessage, botConfig) => {
     try {
+        if (!ai) {
+            const apiKey = process.env.API_KEY?.trim();
+            if (!apiKey || apiKey === '' || apiKey === 'undefined') {
+                return "Configuración IA pendiente: Por favor activa tu API_KEY en el panel de control.";
+            }
+            ai = new GoogleGenAI(apiKey);
+        }
+
         const model = ai.getGenerativeModel({ 
             model: "gemini-2.0-flash",
             systemInstruction: botConfig.systemPrompt || "Eres un Agente Neural de WhatsCloud. Tu objetivo es ayudar al usuario de forma eficiente y profesional."
