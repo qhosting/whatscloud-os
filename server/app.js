@@ -22,6 +22,7 @@ import { getLeads, getLeadDetail, deleteLead, exportLeads } from './controllers/
 import { requestRecharge, uploadReceipt, approvePayment } from './controllers/paymentController.js';
 import { handleAgentChat } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
+import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
@@ -135,7 +136,6 @@ if (process.env.NODE_ENV !== 'test') {
 
 // --- QUEUE WORKERS ---
 import { voiceQueue } from './queues/voiceQueue.js';
-import { scraperQueue } from './queues/scraperQueue.js';
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', validate(registerSchema), register);
@@ -146,6 +146,9 @@ import { handleN8nIncoming } from './services/webhookService.js';
 // --- VOIP & CAMPAIGN ROUTES ---
 app.post('/api/call', verifyToken, initiateCall);
 app.post('/api/voice/campaign', verifyToken, createVoiceCampaign);
+
+// --- SMS ROUTES ---
+app.post('/api/sms/campaign', verifyToken, createSmsCampaign);
 
 // --- PAYMENT ROUTES ---
 app.post('/api/payments/recharge', verifyToken, requestRecharge);

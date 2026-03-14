@@ -157,6 +157,30 @@ export const accService = {
     }
   },
 
+  sendSmsCampaign: async (config: any, cost: number) => {
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/sms/campaign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          campaignName: config.campaignName,
+          message: config.message,
+          audience: config.audience,
+          cost: cost
+        })
+      });
+      if (!response.ok) throw new Error('Failed to send SMS campaign');
+      return await response.json();
+    } catch (error) {
+      console.error("[SMS] Error:", error);
+      throw error;
+    }
+  },
+
   rechargeCredits: async (amount: number, method: string, token?: string, deviceSessionId?: string) => {
     try {
       const tokenAuth = localStorage.getItem('wc_auth_token');

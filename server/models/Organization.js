@@ -59,6 +59,19 @@ export const Organization = sequelize.define('Organization', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // LabsMobile SMS Integration
+    labsMobileUser: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    labsMobileToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    labsMobileSender: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     subscriptionStatus: {
         type: DataTypes.STRING,
         defaultValue: 'none',

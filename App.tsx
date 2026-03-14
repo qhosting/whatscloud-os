@@ -478,17 +478,14 @@ const App: React.FC = () => {
                  });
                  alert("Agente Neural desplegado en WhatsCloud Cluster.");
              }} role={profile.role} />}
-             {activeModule === 'SMSReminder' && <SMSReminder initialLeads={leads.filter(l => selectedLeads.has(l.id))} accCredits={profile.credits} onSendCampaign={(config, cost) => {
-                 automationService.trigger({
-                     action: 'sms_campaign',
-                     userId: profile.userId,
-                     timestamp: new Date().toISOString(),
-                     module: 'SMSReminder',
-                     role: profile.role,
-                     holding_identity: { entity: 'Aurum Capital Holding', engine: 'WhatsCloud Ecosistema', active_protocol: 'ABUNDANCE_318_798' },
-                     data: { config, cost }
-                 });
-                 alert("Campaña SMS encolada en Redis para envío inmediato.");
+             {activeModule === 'SMSReminder' && <SMSReminder initialLeads={leads.filter(l => selectedLeads.has(l.id))} accCredits={profile.credits} onSendCampaign={async (config, cost) => {
+                 try {
+                     const result = await accService.sendSmsCampaign(config, cost);
+                     setProfile(prev => prev ? {...prev, credits: result.remainingCredits} : null);
+                     alert(result.message || "Campaña SMS enviada exitosamente.");
+                 } catch (e) {
+                     alert("Error al enviar campaña SMS. Verifica tus créditos o configuración.");
+                 }
              }} />}
               {activeModule === 'VoiceCampaigns' && <VoiceCampaigns initialLeads={leads.filter(l => selectedLeads.has(l.id))} accCredits={profile.credits} onSendCampaign={async (config, cost) => {
                   try {
