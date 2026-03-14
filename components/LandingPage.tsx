@@ -12,14 +12,13 @@ import {
   Lock,
   Mail
 } from 'lucide-react';
-import { accService } from '../services/accService';
 import { ACCProfile } from '../types';
 
 interface LandingPageProps {
   onLoginSuccess: (profile: ACCProfile) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,12 +31,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
       setError('');
 
       try {
+          let profile: ACCProfile;
           if (isLoginMode) {
-              await accService.login(email, password);
+              profile = await accService.login(email, password);
           } else {
-              await accService.register(email, password);
+              profile = await accService.register(email, password);
           }
-          onEnter(); // Trigger App transition
+          onLoginSuccess(profile); // Trigger App transition with real profile
       } catch (err) {
           setError('Error de autenticación. Verifica tus credenciales.');
       } finally {

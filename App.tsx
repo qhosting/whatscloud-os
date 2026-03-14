@@ -88,6 +88,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setProfile(null);
     localStorage.removeItem('redis_active_session');
+    localStorage.removeItem('wc_auth_token');
   };
 
   const handleSearch = async () => {
