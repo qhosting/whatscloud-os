@@ -50,7 +50,19 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Security Middlwares
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://esm.sh", "https://static.cloudflareinsights.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:*"],
+      connectSrc: ["'self'", "https://esm.sh", "https://generativelanguage.googleapis.com"],
+      upgradeInsecureRequests: null,
+    },
+  },
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();

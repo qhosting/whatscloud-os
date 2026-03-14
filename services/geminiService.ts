@@ -3,7 +3,16 @@ import { Lead, SearchFilters, BotConfig, SmartAction, ChatMessage, LongTermMemor
 
 // NOTE: Frontend AI client is kept for Chat Simulator but should use a proxy in production.
 // For Scraper, we use the Backend API exclusively.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+let ai: any = null;
+
+const getAI = () => {
+  if (ai) return ai;
+  const apiKey = (process.env.API_KEY || '').trim();
+  if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+};
 
 export const geminiService = {
   // Motor de Scraping Real (Puppeteer en Servidor)
@@ -116,7 +125,10 @@ export const geminiService = {
             6. Return the FULL updated JSON object. Do not remove existing data unless contradicted.
         `;
 
-        const response = await ai.models.generateContent({
+        const aiInstance = getAI();
+        if (!aiInstance) return currentMemory;
+
+        const response = await aiInstance.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: prompt,
             config: {
@@ -170,7 +182,10 @@ export const geminiService = {
             - Output: Solo la frase estratégica.
         `;
 
-        const response = await ai.models.generateContent({
+        const aiInstance = getAI();
+        if (!aiInstance) return "Análisis no disponible (IA no configurada)";
+
+        const response = await aiInstance.models.generateContent({
             model: 'gemini-3-flash-preview',
             contents: prompt
         });
