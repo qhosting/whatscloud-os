@@ -160,6 +160,14 @@ scraperQueue.process(2, async (job) => {
                             await lead.update({ aiScore: scoreData.score, aiSummary: scoreData.summary });
                         }
                     } catch (e) { logger.warn(`[SCRAPER] AI Score warning: ${e.message}`); }
+
+                    // 2. Export to n8n / Integrations
+                    try {
+                        const org = await Organization.findByPk(organizationId);
+                        if (org) {
+                            await exportLeadToIntegrations(lead, org);
+                        }
+                    } catch (e) { logger.warn(`[SCRAPER] Webhook Export failed: ${e.message}`); }
                 }
 
                 const extractionProgress = 40 + Math.floor(((i + 1) / maxToScrape) * 60);
