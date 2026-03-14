@@ -51,12 +51,26 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                 <Building2 size={20} />
             </div>
             <div>
-                <h3 className="font-semibold text-slate-800 leading-tight">{lead.businessName}</h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-800 leading-tight">{lead.businessName}</h3>
+                    {lead.aiScore && (
+                        <div 
+                          className={`text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm border ${
+                            lead.aiScore >= 80 ? 'bg-emerald-500 text-white border-emerald-600' : 
+                            lead.aiScore >= 50 ? 'bg-yellow-400 text-black border-yellow-500' : 
+                            'bg-slate-200 text-slate-600 border-slate-300'
+                          }`}
+                          title="Calificación de Calidad IA"
+                        >
+                            {lead.aiScore}%
+                        </div>
+                    )}
+                </div>
                 
                 {/* Social Proof Section (Maps Data) */}
                 <div className="flex items-center gap-2 mt-1">
                 <span className="text-[11px] font-semibold text-wc-blue bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-blue-100 inline-block">
-                    {lead.category}
+                    {lead.category || lead.niche}
                 </span>
                 {(lead.rating || 0) > 0 && (
                     <div className="flex items-center gap-1 text-amber-500">
@@ -129,12 +143,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
 
       {/* INTELLIGENCE SINGULARITY SECTION */}
       <div className="mt-4">
-          {lead.analysis ? (
+          {(lead.aiSummary || lead.analysis) ? (
               <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 animate-in fade-in">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-purple-600 mb-1 uppercase tracking-wide">
-                      <BrainCircuit size={12} /> Estrategia IA
+                      <BrainCircuit size={12} /> {lead.aiSummary ? 'Calificación IA' : 'Estrategia IA'}
                   </div>
-                  <p className="text-xs text-slate-700 italic leading-snug">"{lead.analysis}"</p>
+                  <p className="text-xs text-slate-700 italic leading-snug">"{lead.aiSummary || lead.analysis}"</p>
               </div>
           ) : (
             onAnalyze && (

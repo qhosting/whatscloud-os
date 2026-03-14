@@ -2,6 +2,7 @@ import Queue from 'bull';
 import puppeteer from 'puppeteer';
 import { Lead, Organization } from '../models/index.js';
 import { exportLeadToIntegrations } from '../services/webhookService.js';
+import { scoreLead } from '../services/aiService.js';
 import logger from '../config/logger.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -123,7 +124,18 @@ scraperQueue.process(2, async (job) => {
                     scrapedLeads.push(lead);
                     logger.info(`[SCRAPER] Lead ${created ? 'Created' : 'Updated'}: ${data.phone}`);
 
-                    // Trigger Core Integrations (n8n, Chatwoot, ACC)
+                    // 1. Scoring with AI
+                    try {
+                        const { score, summary } = await scoreLead(lead);
+                        if (score !== null) {
+                            await lead.update({ aiScore: score, aiSummary: summary });
+                            logger.info(`[SCRAPER] Lead Scored (${score}/100): ${data.phone}`);
+                        }
+                    } catch (aiError) {
+                        logger.error(`[SCRAPER] AI Scoring Error: ${aiError.message}`);
+                    }
+
+                    // 2. Trigger Core Integrations (n8n, Chatwoot, ACC)
                     try {
                         const org = await Organization.findByPk(organizationId);
                         if (org) {

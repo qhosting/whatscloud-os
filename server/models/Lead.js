@@ -50,6 +50,14 @@ export const Lead = sequelize.define('Lead', {
     organizationId: {
         type: DataTypes.UUID,
         allowNull: false,
+    },
+    aiScore: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    aiSummary: {
+        type: DataTypes.TEXT,
+        allowNull: true,
     }
 }, {
     timestamps: true,

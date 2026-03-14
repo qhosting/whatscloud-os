@@ -196,8 +196,8 @@
 ## 💡 OPORTUNIDADES DE NEGOCIO
 
 ### **Features Premium (Pro/Enterprise)**
-- ✨ **AI Lead Scoring:** Gemini analiza leads y prioriza automáticamente
-- ✨ **Scraping Masivo:** Hasta 100 leads por búsqueda (vs 5 en Free)
+- [x] ✨ **AI Lead Scoring:** Gemini analiza leads y prioriza automáticamente (Implementado)
+- [ ] ✨ **Scraping Masivo:** Hasta 100 leads por búsqueda (vs 5 en Free)
 - ✨ **Enriquecimiento Social:** Extrae Instagram, Facebook, LinkedIn
 - ✨ **CRM Integration:** Sincronización bidireccional con HubSpot/Salesforce
 - ✨ **White Label:** Customización de marca y dominio propio

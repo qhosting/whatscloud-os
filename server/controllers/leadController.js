@@ -29,7 +29,7 @@ import { Lead } from '../models/index.js';
  *           type: string
  *     responses:
  *       200:
- *         description: A paginated list of leads
+ *         description: A paginated list of leads with AI scoring (aiScore, aiSummary)
  */
 export const getLeads = async (req, res) => {
     try {
