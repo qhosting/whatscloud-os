@@ -23,11 +23,11 @@ export const performBackup = async () => {
   try {
     // 1. DUMP DATABASES
     // Postgres
-    let pgHost = process.env.PG_HOST;
-    let pgUser = process.env.PG_USER;
-    let pgPass = process.env.PG_PASS;
-    let pgDb = process.env.PG_DB;
-    let pgPort = process.env.PG_PORT || '5432';
+    let pgHost = process.env.DB_HOST || process.env.PG_HOST;
+    let pgUser = process.env.DB_USER || process.env.PG_USER;
+    let pgPass = process.env.DB_PASS || process.env.PG_PASS;
+    let pgDb = process.env.DB_NAME || process.env.PG_DB;
+    let pgPort = process.env.DB_PORT || process.env.PG_PORT || '5432';
 
     // Fallback: Parse DATABASE_URL if individual vars are missing
     if ((!pgHost || !pgUser || !pgDb) && process.env.DATABASE_URL) {
@@ -43,11 +43,11 @@ export const performBackup = async () => {
       }
     }
 
-    // Final defaults for safety
-    pgHost = pgHost || 'localhost';
-    pgUser = pgUser || 'user';
-    pgPass = pgPass || 'password';
-    pgDb = pgDb || 'database';
+    // Final defaults for safety (Internal Docker Network names usually match env keys or specific hostnames)
+    pgHost = pgHost || 'postgres'; 
+    pgUser = pgUser || 'postgres';
+    pgPass = pgPass || '';
+    pgDb = pgDb || 'whatscloud';
 
     const pgDumpCmd = `PGPASSWORD="${pgPass}" pg_dump -h ${pgHost} -p ${pgPort} -U ${pgUser} -d ${pgDb} -f ${path.join(BACKUP_DIR, 'pg_dump.sql')}`;
 

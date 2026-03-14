@@ -100,19 +100,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// --- STRIPE WEBHOOK (Must be before express.json()) ---
-import { handleStripeWebhook } from './services/stripeService.js';
-app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
-  let event = req.body;
-  // In production, verify signature with stripe.webhooks.constructEvent
-  try {
-    await handleStripeWebhook(JSON.parse(event.toString()));
-    res.json({ received: true });
-  } catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-});
-
 app.use(express.json());
 
 // --- DATABASE CONNECTION ---
