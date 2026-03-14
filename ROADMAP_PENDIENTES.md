@@ -2,6 +2,7 @@
 ## **Backlog de Trabajo: WhatsCloud LeadScrapper → SaaS Robusto**
 
 > **Objetivo:** Transformar el prototipo Alpha en un sistema SaaS escalable, resiliente y listo para ventas.  
+> **Dominio Oficial:** [whatscloud.mx](https://whatscloud.mx)
 > **Timeline Estimado:** 6-8 semanas de desarrollo intensivo
 
 ---
