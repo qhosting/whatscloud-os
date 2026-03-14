@@ -178,10 +178,10 @@
 4. **Validación:** Zod implementado en todas las rutas críticas.
 5. **Healthcheck:** Mejorado para verificar Postgres y Redis.
 6. **Índices:** Agregados índices clave para `Lead` (niche, city, etc.).
+7. **Dashboard Real-Time:** Conectado frontend con métricas reales de PostgreSQL.
 
 ### **Pendiente (Siguiente Fase)**
-1. **Frontend Integration:** Conectar el dashboard visual con los nuevos endpoints paginados.
-2. **Migraciones:** Usar `sequelize-cli` para no depender de `.sync()`.
+1. **Migraciones:** Usar `sequelize-cli` para no depender de `.sync()`.
 3. **Secrets:** `.env` no es seguro para producción extremo (usar Vault opcional).
 4. **Frontend Error Boundaries:** Mejorar UX en crashes del cliente.
 

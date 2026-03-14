@@ -21,17 +21,19 @@ import {
   CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network
 } from 'lucide-react';
 
-type ModuleType = 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel';
+type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
-  const [activeModule, setActiveModule] = useState<ModuleType>('LeadScrapper');
+  const [activeModule, setActiveModule] = useState<ModuleType>('Dashboard');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [isScraping, setIsScraping] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({ niche: '', country: 'México', state: '', city: '', colonia: '' });
   const [viewFilters, setViewFilters] = useState<ViewFilters>({ minRating: 0, requireEmail: false, sortBy: 'relevance' });
   const [infraStatus] = useState({ redis: 'online', db: 'online' });
+  const [stats, setStats] = useState<any>(null);
+  const [activeProtocol, setActiveProtocol] = useState<SystemProtocol | null>(null);
 
   // Manejo de Login Exitoso
   const handleLoginSuccess = (userProfile: ACCProfile) => {
@@ -56,6 +58,29 @@ const App: React.FC = () => {
     };
     checkSession();
   }, []);
+
+  // Fetch Stats and real Leads on load
+  useEffect(() => {
+    if (profile) {
+      accService.getDashboardStats().then(setStats);
+      fetchLeads();
+    }
+  }, [profile]);
+
+  const fetchLeads = async () => {
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/leads?limit=50', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLeads(data.leads || []);
+      }
+    } catch (e) {
+      console.error("Fetch Leads Error", e);
+    }
+  };
 
   const handleLogout = () => {
     setProfile(null);
@@ -147,6 +172,11 @@ const App: React.FC = () => {
     }
   };
 
+  const exportLeads = async () => {
+    if (selectedLeads.size === 0) return;
+    alert(`Exportando ${selectedLeads.size} leads a CRM Corporativo...`);
+  };
+
   const processedLeads = useMemo(() => {
     let result = [...leads];
     if (viewFilters.minRating > 0) result = result.filter(l => (l.rating || 0) >= viewFilters.minRating);
@@ -176,6 +206,7 @@ const App: React.FC = () => {
         </div>
         
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+            <SidebarItem icon={<Activity size={18} />} label="Tablero Principal" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} />
             <SidebarItem icon={<Search size={18} />} label="Lead Scrapper" active={activeModule === 'LeadScrapper'} onClick={() => setActiveModule('LeadScrapper')} />
             <SidebarItem icon={<MessageSquare size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} />
             <SidebarItem icon={<MessageCircle size={18} />} label="SMS Reminder" active={activeModule === 'SMSReminder'} onClick={() => setActiveModule('SMSReminder')} />
@@ -241,6 +272,46 @@ const App: React.FC = () => {
           </header>
 
           <main className="flex-grow p-8 overflow-y-auto bg-[#FBFDFF]">
+             {activeModule === 'Dashboard' && (
+                <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
+                    <h1 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">Dashboard <span className="text-wc-blue">Real-Time</span></h1>
+                    
+                    {/* STATS GRID */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <StatCard title="Total Leads" value={stats?.summary.totalLeads || 0} icon={<Database className="text-wc-blue" />} />
+                        <StatCard title="Alta Calidad" value={stats?.summary.highQualityLeads || 0} icon={<Zap className="text-wc-green" />} />
+                        <StatCard title="Hoy" value={stats?.summary.recentLeads || 0} icon={<Activity className="text-wc-purple" />} />
+                        <StatCard title="Créditos" value={profile.credits} icon={<CreditCard className="text-amber-500" />} />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 className="font-bold text-slate-800 mb-4">Top Nichos</h3>
+                            <div className="space-y-4">
+                                {stats?.charts.leadsByNiche.map((n: any) => (
+                                    <div key={n.niche} className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600 font-medium capitalize">{n.niche}</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-wc-blue" 
+                                                    style={{ width: `${(n.count / stats.summary.totalLeads) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-900">{n.count}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                            <Cloud size={48} className="text-slate-200 mb-4" />
+                            <h3 className="font-bold text-slate-800">Sincronización Cloud Activa</h3>
+                            <p className="text-sm text-slate-500 max-w-[250px] mt-2">Toda tu data está persistida en PostgreSQL 16 y respaldada en Google Drive.</p>
+                        </div>
+                    </div>
+                </div>
+             )}
              {activeModule === 'LeadScrapper' && (
                  <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -373,6 +444,16 @@ const SidebarItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, 
     >
         {icon} <span className="tracking-tight">{label}</span>
     </button>
+);
+
+const StatCard = ({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-start mb-4">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">{icon}</div>
+        </div>
+        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{title}</h4>
+        <p className="text-3xl font-black text-slate-900">{value}</p>
+    </div>
 );
 
 export default App;

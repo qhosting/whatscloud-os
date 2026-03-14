@@ -114,5 +114,19 @@ export const accService = {
       console.error("Credit Error", e);
       return 0;
     }
+  },
+
+  getDashboardStats: async () => {
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/dashboard/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return await response.json();
+    } catch (error) {
+      console.error("[DASHBOARD] Error:", error);
+      return null;
+    }
   }
 };

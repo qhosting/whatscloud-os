@@ -20,6 +20,7 @@ import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
 import { getLeads, getLeadDetail, deleteLead } from './controllers/leadController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
+import { getStats } from './controllers/dashboardController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
 import { validate } from './middleware/validate.js';
@@ -282,6 +283,9 @@ app.delete('/api/leads/:id', verifyToken, deleteLead);
 // --- BOT MANAGEMENT ---
 app.get('/api/bot/config', verifyToken, getBotConfig);
 app.post('/api/bot/config', verifyToken, updateBotConfig);
+
+// --- DASHBOARD ---
+app.get('/api/dashboard/stats', verifyToken, getStats);
 
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
