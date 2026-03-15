@@ -1,25 +1,30 @@
 import { GoogleGenAI } from "@google/genai";
 import logger from '../config/logger.js';
 
-let ai;
-const apiKey = process.env.API_KEY?.trim();
+let ai = null;
 
-if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
-  try {
-    ai = new GoogleGenAI(apiKey);
-  } catch (error) {
-    logger.error(`[AI-SERVICE] Failed to initialize Gemini: ${error.message}`);
-  }
-}
+const getAI = () => {
+    if (ai) return ai;
+    const apiKey = process.env.API_KEY?.trim();
+    if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
+        try {
+            ai = new GoogleGenAI(apiKey);
+        } catch (error) {
+            logger.error(`[AI-SERVICE] Failed to initialize Gemini: ${error.message}`);
+        }
+    }
+    return ai;
+};
 
 /**
  * Analyzes a lead's data and returns a score (1-100) and a brief summary.
  */
 export const scoreLead = async (leadData) => {
-  if (!ai) return { score: null, summary: "AI not configured" };
+  const aiInstance = getAI();
+  if (!aiInstance) return { score: null, summary: "AI not configured" };
 
   try {
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
       Analyze this business lead and provide a quality score from 1 to 100 and a 1-sentence summary of why.

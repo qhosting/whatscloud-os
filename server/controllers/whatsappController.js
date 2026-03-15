@@ -3,29 +3,27 @@ import { BotConfig } from '../models/BotConfig.js';
 import axios from 'axios';
 import logger from '../config/logger.js';
 
-let ai;
-const apiKey = process.env.API_KEY?.trim();
+let ai = null;
 
-if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
-  try {
-    ai = new GoogleGenAI(apiKey);
-    if (process.env.NODE_ENV !== 'test') {
-      logger.info('[WHATSAPP] Gemini AI initialized successfully');
+const getAI = () => {
+  if (ai) return ai;
+  const apiKey = process.env.API_KEY?.trim();
+  if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
+    try {
+      ai = new GoogleGenAI(apiKey);
+    } catch (error) {
+      logger.error(`[WHATSAPP] Failed to initialize Gemini AI: ${error.message}`);
     }
-  } catch (error) {
-    logger.error(`[WHATSAPP] Failed to initialize Gemini AI: ${error.message}`);
   }
-} else {
-  if (process.env.NODE_ENV !== 'test') {
-    logger.warn('[WHATSAPP] API_KEY not set or invalid. Gemini responses will be disabled.');
-  }
-}
+  return ai;
+};
 
 // WAHA API URL (Simulated or Real Env Var)
 const WAHA_API_URL = process.env.WAHA_API_URL || 'http://localhost:3000/api/waha';
 
 export const handleIncomingMessage = async (req, res) => {
-  if (!ai && process.env.NODE_ENV !== 'test') {
+  const aiInstance = getAI();
+  if (!aiInstance && process.env.NODE_ENV !== 'test') {
     return res.status(500).json({ error: 'AI not configured' });
   }
   // WAHA Payload Structure (Simplified)
@@ -63,7 +61,7 @@ export const handleIncomingMessage = async (req, res) => {
         User: ${message}
       `;
 
-    const response = await ai.models.generateContent({
+    const response = await aiInstance.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: prompt
     });
