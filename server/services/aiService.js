@@ -27,17 +27,22 @@ export const scoreLead = async (leadData) => {
     const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
-      Analyze this business lead and provide a quality score from 1 to 100 and a 1-sentence summary of why.
-      Data:
-      Name: ${leadData.name}
-      Niche: ${leadData.niche}
-      City: ${leadData.city}
-      Rating: ${leadData.rating}
-      Reviews: ${leadData.reviews}
-      Website: ${leadData.website}
-      Address: ${leadData.address}
+      Analyze this business lead and provide a quality score (1-100) and a "Sales Strategy" summary.
+      
+      Business Info:
+      - Name: ${leadData.name}
+      - Niche: ${leadData.niche}
+      - City: ${leadData.city}
+      - Rating: ${leadData.rating} (${leadData.reviews} reviews)
+      - Website: ${leadData.website || 'N/A'}
+      - Phone: ${leadData.phone || 'N/A'}
+      - Socials Found: ${JSON.stringify(leadData.metadata?.socials || {})}
 
-      Return ONLY a JSON object with this format:
+      Task:
+      1. Score (1-100): High score if it has good reviews, website, and phone.
+      2. Summary: Provide a 1-sentence sales pitch or recommendation on why this lead is valuable.
+
+      Return ONLY a JSON object:
       {"score": number, "summary": "string"}
     `;
 

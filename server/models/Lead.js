@@ -15,6 +15,10 @@ export const Lead = sequelize.define('Lead', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     niche: {
         type: DataTypes.STRING,
         allowNull: true,

@@ -116,17 +116,28 @@ scraperQueue.process(2, async (job) => {
                             const targetUrl = data.website.startsWith('http') ? data.website : `http://${data.website}`;
                             logger.info(`[SOCIAL-RECON] Visiting ${targetUrl}`);
                             
-                            await webPage.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 15000 });
+                            await webPage.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 20000 });
                             
-                            socialLinks = await webPage.evaluate(() => {
+                            const reconData = await webPage.evaluate(() => {
                                 const links = Array.from(document.querySelectorAll('a[href]')).map(a => a.href.toLowerCase());
+                                const bodyText = document.body.innerText;
+                                
+                                // Email Regex
+                                const emailMatch = bodyText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+                                
                                 return {
-                                    facebook: links.find(l => l.includes('facebook.com/')) || null,
-                                    instagram: links.find(l => l.includes('instagram.com/')) || null,
-                                    linkedin: links.find(l => l.includes('linkedin.com/')) || null,
-                                    twitter: links.find(l => l.includes('twitter.com/') || l.includes('x.com/')) || null
+                                    email: emailMatch ? emailMatch[0] : null,
+                                    socials: {
+                                        facebook: links.find(l => l.includes('facebook.com/')) || null,
+                                        instagram: links.find(l => l.includes('instagram.com/')) || null,
+                                        linkedin: links.find(l => l.includes('linkedin.com/')) || null,
+                                        twitter: links.find(l => l.includes('twitter.com/') || l.includes('x.com/')) || null
+                                    }
                                 };
                             });
+                            socialLinks = reconData.socials;
+                            data.email = reconData.email;
+                            
                             await webPage.close();
                         } catch (webErr) {
                             logger.warn(`[SOCIAL-RECON] Failed for ${data.website}: ${webErr.message}`);
@@ -136,6 +147,7 @@ scraperQueue.process(2, async (job) => {
                     const [lead, created] = await Lead.upsert({
                         name: data.name,
                         phone: data.phone,
+                        email: data.email, // Save extracted email
                         niche,
                         city,
                         country,
@@ -145,7 +157,7 @@ scraperQueue.process(2, async (job) => {
                         reviews: data.reviews,
                         organizationId: organizationId,
                         metadata: { 
-                            source: 'Google Maps Real Scraper', 
+                            source: 'Google Maps Premium Scrapper', 
                             scrapedAt: new Date(),
                             socials: socialLinks 
                         }

@@ -54,15 +54,22 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                 <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-slate-800 leading-tight">{lead.businessName}</h3>
                     {lead.aiScore && (
-                        <div 
-                          className={`text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm border ${
-                            lead.aiScore >= 80 ? 'bg-emerald-500 text-white border-emerald-600' : 
-                            lead.aiScore >= 50 ? 'bg-yellow-400 text-black border-yellow-500' : 
-                            'bg-slate-200 text-slate-600 border-slate-300'
-                          }`}
-                          title="Calificación de Calidad IA"
-                        >
-                            {lead.aiScore}%
+                        <div className="flex items-center gap-1.5">
+                            <div 
+                            className={`text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm border ${
+                                lead.aiScore >= 80 ? 'bg-emerald-500 text-white border-emerald-600' : 
+                                lead.aiScore >= 50 ? 'bg-yellow-400 text-black border-yellow-500' : 
+                                'bg-slate-200 text-slate-600 border-slate-300'
+                            }`}
+                            title="Calificación de Calidad IA"
+                            >
+                                {lead.aiScore}%
+                            </div>
+                            {lead.aiScore >= 90 && (
+                                <span className="flex items-center gap-0.5 text-[9px] font-bold text-wc-blue bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 animate-pulse">
+                                    <Zap size={10} fill="currentColor" /> HOT
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>
@@ -112,6 +119,13 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                     </button>
                 )}
             </div>
+            {/* EMAIL ROW */}
+            {(lead.email || lead.metadata?.email) && (
+                <div className="flex items-center gap-3">
+                    <Mail size={16} className="text-wc-purple shrink-0" />
+                    <span className="text-slate-700 truncate">{lead.email || lead.metadata?.email}</span>
+                </div>
+            )}
             
             {/* Social Media Row */}
             {(lead.socialMedia || lead.metadata?.socials) && (
