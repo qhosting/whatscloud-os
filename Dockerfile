@@ -70,9 +70,12 @@ ENV PORT=3000
 # Expose Port
 EXPOSE 3000
 
+# Permissions for start script
+RUN chmod +x ./start.sh
+
 # Health Check
 HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Start Server
-CMD ["node", "server/server.js"]
+# Start Server via Script
+CMD ["./start.sh"]
