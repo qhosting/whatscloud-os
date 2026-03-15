@@ -49,31 +49,41 @@ scraperQueue.process(2, async (job) => {
         const maxScrollAttempts = 15;
 
         while (resultsFound < limit && scrollAttempts < maxScrollAttempts) {
-            resultsFound = (await page.$$('a[href*="/maps/place/"]')).length;
+            resultsFound = await page.evaluate(() => {
+                const links = Array.from(document.querySelectorAll('a[href*="/maps/place/"]')).map(a => a.href);
+                return new Set(links.filter(l => l.includes('/maps/place/'))).size;
+            });
             await page.evaluate(() => {
                 const feed = document.querySelector('div[role="feed"]');
-                if (feed) feed.scrollBy(0, 1500);
+                if (feed) feed.scrollBy(0, 2000);
             });
             await new Promise(r => setTimeout(r, 2000));
             scrollAttempts++;
             job.progress(Math.min(10 + (scrollAttempts * 2), 40));
         }
 
-        const itemLinks = await page.$$('a[href*="/maps/place/"]');
-        logger.info(`[SCRAPER] Found ${itemLinks.length} items. Starting extraction...`);
+        // --- STEP 1.5: DEDUPLICATE LINKS ---
+        const rawHrefs = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('a[href*="/maps/place/"]'))
+                        .map(a => a.href)
+                        .filter(href => href.includes('/maps/place/'));
+        });
+        
+        // Use a Set to keep only unique location links
+        const uniqueHrefs = [...new Set(rawHrefs)];
+        logger.info(`[SCRAPER] Found ${rawHrefs.length} raw links, reduced to ${uniqueHrefs.length} unique businesses.`);
         
         const scrapedLeads = [];
-        const maxToScrape = Math.min(itemLinks.length, limit);
+        const maxToScrape = Math.min(uniqueHrefs.length, limit);
 
         // --- STEP 2: ITERATE AND EXTRACT ---
         for (let i = 0; i < maxToScrape; i++) {
             try {
-                // Re-fetch links to avoid stale handle
-                const freshLinks = await page.$$('a[href*="/maps/place/"]');
-                if (!freshLinks[i]) continue;
-
-                await freshLinks[i].click();
-                await new Promise(r => setTimeout(r, 2000)); // Wait for panel to open
+                const targetHref = uniqueHrefs[i];
+                logger.debug(`[SCRAPER] Processing business ${i+1}/${maxToScrape}: ${targetHref}`);
+                
+                await page.goto(targetHref, { waitUntil: 'networkidle2', timeout: 60000 });
+                await new Promise(r => setTimeout(r, 2000)); // Wait for panel to settle
                 
                 // Detailed Extraction Logic
                 const data = await page.evaluate(() => {
@@ -145,7 +155,7 @@ scraperQueue.process(2, async (job) => {
                     }
 
                     const [lead, created] = await Lead.upsert({
-                        name: data.name,
+                        businessName: data.name,
                         phone: data.phone,
                         email: data.email, // Save extracted email
                         niche,

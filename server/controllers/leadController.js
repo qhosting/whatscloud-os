@@ -133,7 +133,7 @@ export const exportLeads = async (req, res) => {
         const rows = leads.map(l => {
             const socials = l.metadata?.socials || {};
             return [
-                `"${l.name || ''}"`,
+                `"${l.businessName || ''}"`,
                 `"${l.phone || ''}"`,
                 `"${l.niche || ''}"`,
                 `"${l.city || ''}"`,
@@ -164,6 +164,23 @@ export const deleteLead = async (req, res) => {
             where: { id, organizationId: req.user.organizationId }
         });
         res.json({ success: !!deleted });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+import { generateStrategy } from '../services/aiService.js';
+
+export const analyzeLead = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const lead = await Lead.findOne({
+            where: { id, organizationId: req.user.organizationId }
+        });
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+        const strategy = await generateStrategy(lead);
+        res.json({ strategy });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

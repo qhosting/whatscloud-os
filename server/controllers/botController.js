@@ -11,12 +11,14 @@ export const getBotConfig = async (req, res) => {
 };
 
 export const updateBotConfig = async (req, res) => {
-    const { systemPrompt, knowledgeBase } = req.body;
+    const { systemPrompt, knowledgeBase, temperature, actions } = req.body;
     try {
         const [config, created] = await BotConfig.upsert({
             userId: req.user.id,
             systemPrompt,
             knowledgeBase,
+            temperature: temperature || 0.7,
+            actions: actions || [],
             organizationId: req.user.organizationId
         });
         res.json({ success: true, config, created });

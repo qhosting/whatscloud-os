@@ -1,18 +1,37 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
 
-const BotConfigSchema = new mongoose.Schema({
-  userId: { type: String, required: true, index: true },
-  systemPrompt: { type: String, default: '' },
-  knowledgeBase: { type: String, default: '' },
-  temperature: { type: Number, default: 0.7 },
-  actions: [{
-    id: String,
-    triggerCode: String,
-    type: String,
-    name: String,
-    content: mongoose.Schema.Types.Mixed
-  }],
-  updatedAt: { type: Date, default: Date.now }
+export const BotConfig = sequelize.define('BotConfig', {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+    },
+    userId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        unique: true
+    },
+    organizationId: {
+        type: DataTypes.UUID,
+        allowNull: false
+    },
+    systemPrompt: {
+        type: DataTypes.TEXT,
+        defaultValue: ''
+    },
+    knowledgeBase: {
+        type: DataTypes.TEXT,
+        defaultValue: ''
+    },
+    temperature: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.7
+    },
+    actions: {
+        type: DataTypes.JSONB,
+        defaultValue: []
+    }
+}, {
+    timestamps: true
 });
-
-export const BotConfig = mongoose.model('BotConfig', BotConfigSchema);

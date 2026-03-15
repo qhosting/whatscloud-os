@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BotConfig, SmartAction, SmartActionType, ChatMessage, UserRole, LongTermMemory } from '../types';
 import { geminiService } from '../services/geminiService';
+import { accService } from '../services/accService';
 import { 
   Bot, 
   Send, 
@@ -83,26 +84,32 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
   const [tempTitle, setTempTitle] = useState('');
   const [tempNumber, setTempNumber] = useState(0);
 
-  // Persistencia Local (Load)
+  // Persistencia Real (Load from DB)
   useEffect(() => {
-    const saved = localStorage.getItem('wc_bot_config');
-    const savedMemory = localStorage.getItem('wc_bot_memory');
-    if (saved) {
-      try {
-        setConfig(JSON.parse(saved));
-      } catch (e) { console.error("Error loading bot config", e); }
-    }
-    if (savedMemory) {
+    const fetchData = async () => {
         try {
-            setMemory(JSON.parse(savedMemory));
-        } catch (e) { console.error("Error loading memory", e); }
-    }
-  }, []);
+            const configData = await accService.getBotConfig();
+            if (configData && !configData.error) {
+                setConfig({
+                    systemPrompt: configData.systemPrompt || INITIAL_PROMPT,
+                    knowledgeBase: configData.knowledgeBase || INITIAL_KB,
+                    temperature: configData.temperature || 0.7,
+                    actions: configData.actions || []
+                });
+            }
+        } catch (e) {
+            console.error("Failed to load bot config from server", e);
+        }
 
-  // Persistencia Local (Save on Change)
-  useEffect(() => {
-    localStorage.setItem('wc_bot_config', JSON.stringify(config));
-  }, [config]);
+        const savedMemory = localStorage.getItem('wc_bot_memory');
+        if (savedMemory) {
+            try {
+                setMemory(JSON.parse(savedMemory));
+            } catch (e) { console.error("Error loading memory", e); }
+        }
+    };
+    fetchData();
+  }, []);
 
   // SCROLL TO BOTTOM
   useEffect(() => {
@@ -127,14 +134,15 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
     setIsTyping(true);
 
     // 2. Call Neural Agent BACKEND
-    const aiResponse = await geminiService.chatWithAgentBackend(userMsg.text, "simulator-user");
+    const { text, actionTriggered } = await geminiService.chatWithAgentBackend(userMsg.text, "simulator-user");
     
     setIsTyping(false);
 
     const botMsg: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      text: aiResponse,
+      text,
+      actionTriggered,
       timestamp: new Date()
     };
 
@@ -495,7 +503,15 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
              {config.actions.length} acciones • {config.knowledgeBase.length} chars KB
            </div>
            <button 
-             onClick={() => onSave(config)}
+             onClick={async () => {
+                try {
+                    await accService.saveBotConfig(config);
+                    onSave(config);
+                    alert("Configuración IA sincronizada con éxito en WhatsCloud PostgreSQL.");
+                } catch (e) {
+                    alert("Error al guardar en el servidor.");
+                }
+             }}
              disabled={isReadOnly}
              className="flex items-center gap-2 bg-wc-gradient text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
              title={isReadOnly ? "Solo lectura para Agentes" : "Guardar cambios"}

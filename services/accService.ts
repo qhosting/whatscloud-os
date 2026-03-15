@@ -217,5 +217,52 @@ export const accService = {
        console.error("[RECEIPT] Error:", error);
        throw error;
     }
+  },
+
+  getPayments: async () => {
+    try {
+      const tokenAuth = localStorage.getItem('wc_auth_token');
+      const response = await fetch('/api/payments', {
+        headers: { 'Authorization': `Bearer ${tokenAuth}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch payments');
+      return await response.json();
+    } catch (error) {
+      console.error("[PAYMENTS] Error:", error);
+      return [];
+    }
+  },
+ 
+  getBotConfig: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/bot/config', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch bot config');
+        return await response.json();
+    } catch (error) {
+        console.error("[BOT-CONFIG] Error:", error);
+        return null;
+    }
+  },
+ 
+  saveBotConfig: async (config: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/bot/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify(config)
+        });
+        if (!response.ok) throw new Error('Failed to save bot config');
+        return await response.json();
+    } catch (error) {
+        console.error("[BOT-CONFIG-SAVE] Error:", error);
+        throw error;
+    }
   }
 };

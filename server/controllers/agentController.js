@@ -15,14 +15,14 @@ export const handleAgentChat = async (req, res) => {
             config = { systemPrompt: "Eres un asistente de WhatsCloud.", temperature: 0.7 };
         }
 
-        const response = await processAgentMessage(
+        const { text, actionTriggered } = await processAgentMessage(
             organizationId, 
             contactId || `user-${userId}`, // Fallback to user if no contactId
             message, 
             config
         );
 
-        res.json({ response });
+        res.json({ response: text, actionTriggered });
 
     } catch (error) {
         logger.error(`[CHAT-CONTROLLER] Error: ${error.message}`);

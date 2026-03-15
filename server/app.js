@@ -18,8 +18,8 @@ import { handleIncomingMessage } from './controllers/whatsappController.js';
 import { initiateCall, createVoiceCampaign } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
-import { getLeads, getLeadDetail, deleteLead, exportLeads } from './controllers/leadController.js';
-import { requestRecharge, uploadReceipt, approvePayment } from './controllers/paymentController.js';
+import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead } from './controllers/leadController.js';
+import { requestRecharge, uploadReceipt, approvePayment, getPayments } from './controllers/paymentController.js';
 import { handleAgentChat } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { createSmsCampaign } from './controllers/smsController.js';
@@ -64,6 +64,11 @@ app.use(helmet({
   },
 }));
 
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', registerMetrics.contentType);
+  res.end(await registerMetrics.metrics());
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -73,15 +78,11 @@ app.use((req, res, next) => {
       .observe(duration);
   });
 
-  if (process.env.NODE_ENV !== 'test') {
+  // Skip logging for health checks to reduce noise
+  if (process.env.NODE_ENV !== 'test' && req.originalUrl !== '/api/health') {
     logger.info(`Incoming ${req.method} request to ${req.originalUrl}`);
   }
   next();
-});
-
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', registerMetrics.contentType);
-  res.end(await registerMetrics.metrics());
 });
 
 // Swagger Documentation
@@ -151,6 +152,7 @@ app.post('/api/voice/campaign', verifyToken, createVoiceCampaign);
 app.post('/api/sms/campaign', verifyToken, createSmsCampaign);
 
 // --- PAYMENT ROUTES ---
+app.get('/api/payments', verifyToken, getPayments);
 app.post('/api/payments/recharge', verifyToken, requestRecharge);
 app.post('/api/payments/receipt', verifyToken, uploadReceipt);
 app.post('/api/payments/:paymentId/approve', verifyToken, approvePayment);
@@ -296,6 +298,7 @@ app.get('/api/scrape/:jobId', verifyToken, async (req, res) => {
 app.get('/api/leads', verifyToken, getLeads);
 app.get('/api/leads/export', verifyToken, exportLeads);
 app.get('/api/leads/:id', verifyToken, getLeadDetail);
+app.post('/api/leads/:id/analyze', verifyToken, analyzeLead);
 app.delete('/api/leads/:id', verifyToken, deleteLead);
 
 // --- BOT MANAGEMENT ---
@@ -320,7 +323,12 @@ app.get(/.*/, (req, res, next) => {
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
   if (process.env.NODE_ENV !== 'test') {
-    logger.error(`Global Error: ${err.message}`, { stack: err.stack, path: req.originalUrl });
+    logger.error(`Global Error: ${err.message}`, { 
+      stack: err.stack, 
+      path: req.originalUrl,
+      body: req.body 
+    });
+    console.error('FULL ERROR STACK:', err);
   }
   res.status(err.status || 500).json({
     error: {

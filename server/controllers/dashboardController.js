@@ -56,6 +56,19 @@ export const getStats = async (req, res) => {
             order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
             raw: true
         });
+ 
+        // 6.5 Leads by Niche
+        const leadsByNiche = await Lead.findAll({
+            where: { organizationId },
+            attributes: [
+                ['niche', 'niche'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            group: ['niche'],
+            order: [[sequelize.fn('COUNT', sequelize.col('id')), 'DESC']],
+            limit: 5,
+            raw: true
+        });
 
         // 7. AI Score Distribution
         const scoreRanges = [

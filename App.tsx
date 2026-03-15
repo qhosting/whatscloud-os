@@ -78,7 +78,9 @@ const App: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setLeads(data.leads || []);
+        const rawLeads = data.leads || [];
+        const unique = Array.from(new Map(rawLeads.map((l: any) => [l.id, l])).values());
+        setLeads(unique as Lead[]);
       }
     } catch (e) {
       console.error("Fetch Leads Error", e);
@@ -91,6 +93,19 @@ const App: React.FC = () => {
     localStorage.removeItem('wc_auth_token');
   };
 
+  const refreshProfile = async () => {
+    if (!profile) return;
+    try {
+        const statsData = await accService.getDashboardStats();
+        if (statsData) {
+            setStats(statsData);
+            setProfile(prev => prev ? { ...prev, credits: statsData.summary.creditsRemaining } : null);
+        }
+    } catch (e) {
+        console.error("Refresh Profile Error", e);
+    }
+  };
+
   const handleSearch = async () => {
     if (!profile || profile.credits <= 0) {
       alert("Créditos insuficientes en WhatsCloud.MX");
@@ -101,7 +116,9 @@ const App: React.FC = () => {
     try {
       const newLeads = await geminiService.scrapeLeads(filters, (p) => setScanProgress(p));
       if (newLeads.length > 0) {
-        setLeads(newLeads);
+        // Deduplicate locally just in case
+        const unique = Array.from(new Map(newLeads.map(l => [l.id, l])).values());
+        setLeads(unique);
         // Sincronización real con la DB vía N8N
         await automationService.trigger({
           action: 'deduct_credits',
@@ -392,7 +409,7 @@ const App: React.FC = () => {
                             <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter leading-none">
                                 Lead<span className="text-transparent bg-clip-text bg-wc-gradient">Scrapper</span> 2.0
                             </h1>
-                            <p className="text-slate-500 text-lg max-w-xl">Extracción masiva de Google Maps sincronizada con <strong>PostgreSQL 16</strong>.</p>
+                            <p className="text-slate-500 text-lg max-w-xl">Genera prospectos de alta calidad con <strong>Inteligencia Artificial</strong> en segundos.</p>
                         </div>
                         {leads.length > 0 && (
                             <button 
@@ -520,22 +537,9 @@ const App: React.FC = () => {
              }} />}
              {activeModule === 'AdminPanel' && <AdminPanel onSyncACC={() => {}} />}
              {activeModule === 'Billing' && <BillingModule 
-                currentCredits={profile.credits} 
-                onRecharge={async (amount, method) => {
-                  try {
-                    const res = await accService.rechargeCredits(amount, method);
-                    if (res?.status === 'success') {
-                      setProfile(prev => prev ? {...prev, credits: prev.credits + amount} : null);
-                    }
-                  } catch (e) {
-                    console.error("Billing Error", e);
-                  }
-                }} 
-                onUploadReceipt={async (paymentId, url) => {
-                  await accService.uploadPaymentReceipt(paymentId, url);
-                  alert("Comprobante subido. Tu saldo se actualizará tras la validación.");
-                }} 
-              />}
+                 currentCredits={profile.credits} 
+                 onRefreshCredits={refreshProfile}
+               />}
           </main>
       </div>
     </div>

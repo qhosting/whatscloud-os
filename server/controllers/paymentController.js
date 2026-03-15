@@ -154,3 +154,17 @@ export const approvePayment = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const getPayments = async (req, res) => {
+    try {
+        const organizationId = req.user.organizationId;
+        const payments = await Payment.findAll({
+            where: { organizationId },
+            order: [['createdAt', 'DESC']],
+            limit: 20
+        });
+        res.json(payments);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

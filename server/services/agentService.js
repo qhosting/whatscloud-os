@@ -42,13 +42,18 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
         };
 
         // 3. Build Chat with context
-        // Gemini supports chat sessions. We inject memory facts first.
-        const memoryContext = `CONTEXTO DEL CONTACTO (HECHOS CONOCIDOS): ${JSON.stringify(memory.longTermFacts)}.`;
+        const actionContext = botConfig.actions?.length > 0 
+            ? `\nTIENES DISPONIBLES ESTAS ACCIONES MULTIMEDIA: 
+               ${botConfig.actions.map(a => `- ${a.name}: usa el código ${a.triggerCode}`).join('\n')}
+               Si el usuario necesita algo de esto, escribe el código EXACTO al final de tu respuesta.`
+            : '';
+
+        const memoryContext = `CONTEXTO DEL CONTACTO (HECHOS CONOCIDOS): ${JSON.stringify(memory.longTermFacts)}.${actionContext}`;
         
         const chat = model.startChat({
             history: [
                 { role: "user", parts: [{ text: memoryContext }] },
-                { role: "model", parts: [{ text: "Entendido. Recordaré estos datos para nuestra conversación." }] },
+                { role: "model", parts: [{ text: "Entendido. Recordaré estos datos y códigos de acción para nuestra conversación." }] },
                 ...memory.conversationHistory.slice(-10).map(msg => ({
                     role: msg.role === 'user' ? 'user' : 'model',
                     parts: [{ text: msg.text }]
@@ -56,14 +61,25 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
             ]
         });
 
-        // 4. Send message and handle tools (For now simple text, we can expand to actual Function Calling API)
+        // 4. Send message
         const result = await chat.sendMessage(userMessage);
         const responseText = result.response.text();
+
+        // Detect if any smart action was triggered
+        let triggeredAction = null;
+        if (botConfig.actions) {
+            for (const action of botConfig.actions) {
+                if (responseText.includes(action.triggerCode)) {
+                    triggeredAction = action;
+                    break;
+                }
+            }
+        }
 
         // 5. Update Memory (History)
         const newHistory = [...memory.conversationHistory, 
             { role: 'user', text: userMessage, timestamp: new Date() },
-            { role: 'model', text: responseText, timestamp: new Date() }
+            { role: 'model', text: responseText, timestamp: new Date(), actionTriggered: triggeredAction }
         ];
         
         // Auto-extract facts (Implicit Memory)
@@ -74,7 +90,10 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
             lastInteractionAt: new Date()
         });
 
-        return responseText;
+        return { 
+            text: responseText, 
+            actionTriggered: triggeredAction 
+        };
 
     } catch (error) {
         logger.error(`[AGENT-SERVICE] Error: ${error.message}`);

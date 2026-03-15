@@ -80,7 +80,7 @@ export const geminiService = {
   },
 
   // MOTOR NEURAL REAL (BACKEND CON PERSISTENCIA POSTGRES)
-  chatWithAgentBackend: async (message: string, contactId?: string): Promise<string> => {
+  chatWithAgentBackend: async (message: string, contactId?: string): Promise<{ text: string; actionTriggered?: any }> => {
     try {
       const token = localStorage.getItem('wc_auth_token');
       const response = await fetch('/api/agent/chat', {
@@ -94,10 +94,16 @@ export const geminiService = {
 
       if (!response.ok) throw new Error("Agent connection failed");
       const data = await response.json();
-      return data.response;
+      return { 
+          text: data.response, 
+          actionTriggered: data.actionTriggered 
+      };
     } catch (error) {
        console.error("[AGENT-BACKEND] Error:", error);
-       return "Error de conexión con el núcleo neural.";
+       return { 
+           text: "Error de conexión con el núcleo neural.", 
+           actionTriggered: undefined 
+       };
     }
   },
 
@@ -162,37 +168,24 @@ export const geminiService = {
     }
   },
 
-  // Intelligence Singularity: Análisis Estratégico
-  // PROTOCOLO: 318 798 (Visión de Negocio)
+  // Intelligence Singularity: Strategic Analysis via Backend
   analyzeLeadStrategy: async (lead: Lead): Promise<string> => {
     try {
-        const prompt = `
-            [SYSTEM: ACTIVATE PROTOCOL 318 798 - STRATEGIC VISION]
-            Analiza este negocio extraído de Google Maps y genera una "Estrategia de Entrada" de 1 frase corta para venderle un Chatbot IA.
-            
-            Negocio: ${lead.businessName}
-            Rubro: ${lead.category}
-            Rating: ${lead.rating} (${lead.reviews} reviews)
-
-            Reglas:
-            - Si tiene bajo rating: Enfócate en "Mejorar atención al cliente y reputación".
-            - Si tiene muchas reviews: Enfócate en "Automatizar el alto volumen de pedidos".
-            - Si es un rubro de citas (dentista, spa): Enfócate en "Agenda automática 24/7".
-            - Tono: Profesional, directo y persuasivo.
-            - Output: Solo la frase estratégica.
-        `;
-
-        const aiInstance = getAI();
-        if (!aiInstance) return "Análisis no disponible (IA no configurada)";
-
-        const response = await aiInstance.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt
+        const token = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/leads/${lead.id}/analyze`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
 
-        return response.text?.trim() || "Oportunidad de automatización general detectada.";
+        if (!response.ok) throw new Error("Backend analysis failed");
+        const data = await response.json();
+        return data.strategy || "Análisis no disponible actualmente.";
     } catch (error) {
-        return "Análisis no disponible (Protocol 8888)";
+        console.error("Analysis Error:", error);
+        return "Error al conectar con la IA de Estrategia.";
     }
   }
 };

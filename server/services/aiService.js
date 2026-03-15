@@ -30,7 +30,7 @@ export const scoreLead = async (leadData) => {
       Analyze this business lead and provide a quality score (1-100) and a "Sales Strategy" summary.
       
       Business Info:
-      - Name: ${leadData.name}
+      - Name: ${leadData.businessName}
       - Niche: ${leadData.niche}
       - City: ${leadData.city}
       - Rating: ${leadData.rating} (${leadData.reviews} reviews)
@@ -61,4 +61,39 @@ export const scoreLead = async (leadData) => {
     logger.error(`[AI-SERVICE] Scoring Error: ${error.message}`);
     return { score: null, summary: "Failed to analyze lead." };
   }
+};
+
+/**
+ * Generates a focused sales strategy for a specific lead.
+ */
+export const generateStrategy = async (leadData) => {
+    const aiInstance = getAI();
+    if (!aiInstance) return "IA no configurada en el servidor.";
+
+    try {
+        const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const prompt = `
+            Actúa como un experto en ventas B2B para WhatsCloud (Ecosistema de Chatbots e IA).
+            Genera una estrategia de entrada de 1 frase corta (máximo 15 palabras) para este negocio.
+            
+            Negocio: ${leadData.businessName}
+            Rubro: ${leadData.niche}
+            Rating: ${leadData.rating} (${leadData.reviews} reviews)
+            Website: ${leadData.website || 'No tiene'}
+
+            Consideraciones:
+            - Si no tiene web: Ofrece digitalización inmediata.
+            - Si tiene bajo rating: Ofrece mejorar reputación con bots de atención.
+            - Si es popular: Ofrece automatización de alto volumen de pedidos.
+            
+            Output: Solo la frase estratégica, en español, tono profesional y agresivo (orientado a cierre).
+        `;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim() || "Oportunidad de automatización detectada.";
+    } catch (error) {
+        logger.error(`[AI-STRATEGY] Error: ${error.message}`);
+        return "Error al generar estrategia neural.";
+    }
 };

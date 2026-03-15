@@ -35,6 +35,12 @@ Payment.belongsTo(User, { foreignKey: 'userId' });
 Organization.hasMany(AgentMemory, { foreignKey: 'organizationId' });
 AgentMemory.belongsTo(Organization, { foreignKey: 'organizationId' });
 
+Organization.hasMany(BotConfig, { foreignKey: 'organizationId' });
+BotConfig.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+User.hasOne(BotConfig, { foreignKey: 'userId' });
+BotConfig.belongsTo(User, { foreignKey: 'userId' });
+
 export {
     User,
     Organization,
