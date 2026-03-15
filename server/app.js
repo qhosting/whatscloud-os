@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 import logger from './config/logger.js';
 
 // Import Database & Auth
-import { sequelize, connectMongo, connectRedis } from './config/database.js';
+import { sequelize, connectMongo, connectRedis, redisClient } from './config/database.js';
 import { login, register } from './controllers/authController.js';
 import { verifyToken } from './middleware/authMiddleware.js';
 
@@ -119,7 +119,8 @@ if (process.env.NODE_ENV !== 'test') {
   (async () => {
     try {
       await sequelize.authenticate();
-      logger.info('PostgreSQL Connected');
+      const dbHost = sequelize.options.host || 'unknown';
+      logger.info(`PostgreSQL Connected to: ${dbHost}`);
     } catch (e) { logger.error(`Postgres Connection Failed: ${e.message}`); }
 
     await connectMongo();
@@ -179,8 +180,7 @@ app.get('/api/health', async (req, res) => {
   };
 
   try {
-    const { redisClient } = await import('./config/database.js');
-    status.checks.redis = redisClient.isOpen ? 'ok' : 'disconnected';
+    status.checks.redis = (redisClient && redisClient.isOpen) ? 'ok' : 'disconnected';
   } catch (e) { status.checks.redis = 'error'; }
 
   try {
