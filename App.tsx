@@ -19,7 +19,7 @@ import { PostProcessingToolbar, ViewFilters } from './components/PostProcessingT
 import { LandingPage } from './components/LandingPage';
 
 import { 
-  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet
+  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock
 } from 'lucide-react';
 
 type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing';
@@ -348,13 +348,46 @@ const App: React.FC = () => {
                     
                     {/* STATS GRID */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <StatCard title="Total Leads" value={stats?.summary.totalLeads || 0} icon={<Database className="text-wc-blue" />} />
+                        <StatCard title="Leads Activos" value={stats?.summary.totalLeads || 0} icon={<Database className="text-wc-blue" />} />
+                        <StatCard title="Seguimiento Vencido" value={stats?.summary.overdueFollowUps || 0} icon={<AlertCircle className={`animate-pulse ${stats?.summary.overdueFollowUps > 0 ? 'text-red-500' : 'text-slate-300'}`} />} />
                         <StatCard title="Alta Calidad" value={stats?.summary.highQualityLeads || 0} icon={<Zap className="text-wc-green" />} />
-                        <StatCard title="ROI Potencial" value={`$${stats?.summary.estimatedROI.toLocaleString() || 0}`} icon={<Activity className="text-wc-purple" />} />
-                        <StatCard title="Créditos" value={profile.credits} icon={<CreditCard className="text-amber-500" />} />
+                        <StatCard title="Potencial ROI" value={`$${stats?.summary.estimatedROI.toLocaleString() || 0}`} icon={<Activity className="text-wc-purple" />} />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* CRM Pipeline Chart */}
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                                <Clock size={120} />
+                             </div>
+                             <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <Clock size={18} className="text-slate-900" /> Pipeline de Seguimiento
+                             </h3>
+                             <div className="space-y-4">
+                                {['NEW', 'CONTACTED', 'QUALIFIED', 'CLOSING', 'WON', 'LOST'].map(status => {
+                                    const entry = stats?.charts.leadsByStatus?.find((s: any) => s.status === status);
+                                    const count = entry ? parseInt(entry.count) : 0;
+                                    const percentage = (count / (stats?.summary.totalLeads || 1)) * 100;
+                                    return (
+                                        <div key={status} className="flex items-center gap-4">
+                                            <span className="w-24 text-[10px] font-black text-slate-400 uppercase tracking-widest">{status}</span>
+                                            <div className="flex-1 h-2 bg-slate-50 rounded-full border border-slate-100 overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-1000 ${
+                                                        status === 'WON' ? 'bg-emerald-500' : 
+                                                        status === 'LOST' ? 'bg-slate-300' : 
+                                                        status === 'NEW' ? 'bg-blue-500' : 'bg-wc-blue'
+                                                    }`}
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="w-8 text-right text-[11px] font-bold text-slate-700">{count}</span>
+                                        </div>
+                                    );
+                                })}
+                             </div>
+                        </div>
+
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                             <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
                                 <Search size={18} className="text-wc-blue" /> Dominancia por Nicho
@@ -476,6 +509,7 @@ const App: React.FC = () => {
                                               data: { leadId: l.id, phone: l.phone, extension: profile.pbxExtension || '101' }
                                           });
                                       }}
+                                      onUpdate={() => fetchLeads()}
                                     />
                                 ))}
                              </div>
@@ -535,7 +569,7 @@ const App: React.FC = () => {
                  });
                  setProfile(prev => prev ? {...prev, pbxExtension: ext} : null);
              }} />}
-             {activeModule === 'AdminPanel' && <AdminPanel onSyncACC={() => {}} />}
+             {activeModule === 'AdminPanel' && <AdminPanel />}
              {activeModule === 'Billing' && <BillingModule 
                  currentCredits={profile.credits} 
                  onRefreshCredits={refreshProfile}

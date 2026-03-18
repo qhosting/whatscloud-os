@@ -18,12 +18,14 @@ import { handleIncomingMessage } from './controllers/whatsappController.js';
 import { initiateCall, createVoiceCampaign } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
-import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead } from './controllers/leadController.js';
+import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead, updateLead } from './controllers/leadController.js';
 import { requestRecharge, uploadReceipt, approvePayment, getPayments } from './controllers/paymentController.js';
 import { handleAgentChat } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
+import { verifySuperAdmin } from './middleware/adminMiddleware.js';
+import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits } from './controllers/superAdminController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
 import { validate } from './middleware/validate.js';
@@ -298,12 +300,19 @@ app.get('/api/scrape/:jobId', verifyToken, async (req, res) => {
 app.get('/api/leads', verifyToken, getLeads);
 app.get('/api/leads/export', verifyToken, exportLeads);
 app.get('/api/leads/:id', verifyToken, getLeadDetail);
+app.put('/api/leads/:id', verifyToken, updateLead);
 app.post('/api/leads/:id/analyze', verifyToken, analyzeLead);
 app.delete('/api/leads/:id', verifyToken, deleteLead);
 
 // --- BOT MANAGEMENT ---
 app.get('/api/bot/config', verifyToken, getBotConfig);
 app.post('/api/bot/config', verifyToken, updateBotConfig);
+
+// --- ADMIN PANEL (TENANT MANAGEMENT) ---
+app.get('/api/admin/organizations', verifyToken, verifySuperAdmin, getAllOrganizations);
+app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
+app.put('/api/admin/organizations/:id', verifyToken, verifySuperAdmin, updateOrganization);
+app.post('/api/admin/credits/adjust', verifyToken, verifySuperAdmin, adjustUserCredits);
 
 // --- DASHBOARD ---
 app.get('/api/dashboard/stats', verifyToken, getStats);

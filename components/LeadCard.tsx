@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { Lead } from '../types';
-import { MapPin, Phone, Mail, Building2, CheckCircle, Star, ExternalLink, BrainCircuit, Loader2, PhoneCall, Facebook, Instagram, Linkedin, Globe, Zap } from 'lucide-react';
+import { MapPin, Phone, Mail, Building2, CheckCircle, Star, ExternalLink, BrainCircuit, Loader2, PhoneCall, Facebook, Instagram, Linkedin, Globe, Zap, Calendar, AlertCircle, Edit3, Clock } from 'lucide-react';
+import { accService } from '../services/accService';
 
 interface LeadCardProps {
   lead: Lead;
   onSelect?: (id: string) => void;
   selected?: boolean;
   onAnalyze?: (lead: Lead) => Promise<void>;
-  onCall?: (lead: Lead) => Promise<void>; // New Click-to-Call Prop
+  onCall?: (lead: Lead) => Promise<void>; 
+  onUpdate?: (lead: Lead) => void; // Callback after update
 }
 
-export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, onAnalyze, onCall }) => {
+export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, onAnalyze, onCall, onUpdate }) => {
   const [analyzing, setAnalyzing] = useState(false);
-  const [calling, setCalling] = useState(false); // Calling State
+  const [calling, setCalling] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const handleAnalysis = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -29,9 +32,37 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
     if (confirm(`¿Iniciar llamada a ${lead.businessName} (${lead.phone}) vía Issabel PBX?`)) {
         setCalling(true);
         await onCall(lead);
-        setTimeout(() => setCalling(false), 2000); // Reset state after fake delay
+        setTimeout(() => setCalling(false), 2000); 
     }
   };
+
+  const handleCRMUpdate = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const newStatus = prompt("Cambiar Estado (NEW, CONTACTED, QUALIFIED, WON, LOST, EXPORTED_WC):", lead.status);
+      if (!newStatus) return;
+
+      const newNotes = prompt("Notas de seguimiento:", lead.notes || "");
+      const newPriority = prompt("Prioridad (LOW, MEDIUM, HIGH):", lead.priority) as 'LOW' | 'MEDIUM' | 'HIGH';
+      const newFollowDate = prompt("Fecha de recordatorio (AAAA-MM-DD):", lead.followUpDate?.split('T')[0] || "");
+
+      setUpdating(true);
+      try {
+          await accService.updateLead(lead.id, {
+              status: newStatus.toUpperCase(),
+              notes: newNotes,
+              priority: newPriority,
+              followUpDate: newFollowDate ? new Date(newFollowDate).toISOString() : null
+          });
+          if (onUpdate) onUpdate(lead);
+          alert("Lead actualizado correctamente");
+      } catch (err) {
+          alert("Error al actualizar lead");
+      } finally {
+          setUpdating(false);
+      }
+  };
+
+  const isExpired = lead.followUpDate ? new Date(lead.followUpDate) < new Date() : false;
 
   return (
     <div 
@@ -52,7 +83,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
             </div>
             <div>
                 <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-slate-800 leading-tight">{lead.businessName}</h3>
+                    <h3 className="font-semibold text-slate-800 leading-tight text-sm truncate max-w-[150px]">{lead.businessName}</h3>
                     {lead.aiScore && (
                         <div className="flex items-center gap-1.5">
                             <div 
@@ -65,26 +96,23 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                             >
                                 {lead.aiScore}%
                             </div>
-                            {lead.aiScore >= 90 && (
-                                <span className="flex items-center gap-0.5 text-[9px] font-bold text-wc-blue bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 animate-pulse">
-                                    <Zap size={10} fill="currentColor" /> HOT
-                                </span>
-                            )}
                         </div>
                     )}
                 </div>
                 
-                {/* Social Proof Section (Maps Data) */}
                 <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] font-semibold text-wc-blue bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wide border border-blue-100 inline-block">
-                    {lead.category || lead.niche}
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${
+                    lead.status === 'WON' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                    lead.status === 'LOST' ? 'bg-red-100 text-red-700 border-red-200' :
+                    lead.status === 'NEW' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                    'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
+                    {lead.status}
                 </span>
-                {(lead.rating || 0) > 0 && (
-                    <div className="flex items-center gap-1 text-amber-500">
-                        <Star size={12} fill="currentColor" />
-                        <span className="text-xs font-bold text-slate-700">{lead.rating}</span>
-                        <span className="text-[10px] text-slate-400">({lead.reviews})</span>
-                    </div>
+                {lead.priority === 'HIGH' && (
+                    <span className="flex items-center gap-0.5 text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 uppercase animate-pulse">
+                        <AlertCircle size={10} /> Alta Prioridad
+                    </span>
                 )}
                 </div>
             </div>
@@ -95,16 +123,14 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
         <div className="space-y-2.5 text-sm text-slate-600 mt-4">
             <div className="flex items-start gap-3">
             <MapPin size={16} className="text-wc-green shrink-0 mt-0.5" />
-            <span className="truncate leading-tight">{lead.address}</span>
+            <span className="truncate leading-tight text-xs">{lead.address}</span>
             </div>
             
-            {/* PHONE ROW WITH CLICK-TO-CALL */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Phone size={16} className="text-wc-blue shrink-0" />
-                    <span className="font-mono text-slate-700">{lead.phone}</span>
+                    <span className="font-mono text-xs text-slate-700">{lead.phone}</span>
                 </div>
-                {/* ISSABEL BUTTON */}
                 {onCall && (
                     <button 
                         onClick={handleCall}
@@ -119,66 +145,40 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                     </button>
                 )}
             </div>
-            {/* EMAIL ROW */}
-            {(lead.email || lead.metadata?.email) && (
-                <div className="flex items-center gap-3">
-                    <Mail size={16} className="text-wc-purple shrink-0" />
-                    <span className="text-slate-700 truncate">{lead.email || lead.metadata?.email}</span>
+
+            {lead.followUpDate && (
+                <div className={`flex items-center gap-3 p-2 rounded-lg border ${isExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'}`}>
+                    <Calendar size={14} />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-black">Recordatorio</span>
+                        <span className="text-xs font-bold">{new Date(lead.followUpDate).toLocaleDateString()}</span>
+                    </div>
+                    {isExpired && <span className="ml-auto text-[10px] font-black uppercase">Vencido</span>}
                 </div>
             )}
             
-            {/* Social Media Row */}
-            {(lead.socialMedia || lead.metadata?.socials) && (
-                <div className="flex gap-3 mt-2 pt-2 border-t border-slate-50">
-                    {/* Combine links from both sources */}
-                    {(() => {
-                        const s = { ...lead.socialMedia, ...lead.metadata?.socials };
-                        return (
-                            <>
-                                {s.facebook && <a href={s.facebook} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-600 hover:scale-125 transition-transform" title="Facebook"><Facebook size={14} /></a>}
-                                {s.instagram && <a href={s.instagram} target="_blank" onClick={(e) => e.stopPropagation()} className="text-pink-600 hover:scale-125 transition-transform" title="Instagram"><Instagram size={14} /></a>}
-                                {s.linkedin && <a href={s.linkedin} target="_blank" onClick={(e) => e.stopPropagation()} className="text-blue-800 hover:scale-125 transition-transform" title="LinkedIn"><Linkedin size={14} /></a>}
-                                {s.twitter && <a href={s.twitter} target="_blank" onClick={(e) => e.stopPropagation()} className="text-slate-800 hover:scale-125 transition-transform" title="Twitter/X"><Zap size={14} /></a>}
-                                {s.website && <a href={s.website} target="_blank" onClick={(e) => e.stopPropagation()} className="text-wc-blue hover:scale-125 transition-transform" title="Sitio Web"><Globe size={14} /></a>}
-                            </>
-                        );
-                    })()}
+            {lead.notes && (
+                <div className="bg-slate-50 p-2 rounded border border-slate-100 text-[11px] text-slate-500 line-clamp-2 italic">
+                    <Edit3 size={10} className="inline mr-1" /> {lead.notes}
                 </div>
             )}
-
-            {/* Actions Row */}
-            <div className="flex justify-between items-center pt-2 mt-2 border-t border-slate-100">
-            {lead.mapsUrl && (
-                <a 
-                    href={lead.mapsUrl} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()} 
-                    className="text-xs flex items-center gap-1 text-slate-400 hover:text-wc-blue transition-colors"
-                >
-                    <ExternalLink size={12} />
-                    Google Maps
-                </a>
-            )}
-            </div>
         </div>
       </div>
 
-      {/* INTELLIGENCE SINGULARITY SECTION */}
-      <div className="mt-4">
+      <div className="mt-4 pt-4 border-t border-slate-100">
           {(lead.aiSummary || lead.analysis) ? (
-              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 animate-in fade-in">
+              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 mb-3">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-purple-600 mb-1 uppercase tracking-wide">
-                      <BrainCircuit size={12} /> {lead.aiSummary ? 'Calificación IA' : 'Estrategia IA'}
+                      <BrainCircuit size={12} /> Estrategia IA
                   </div>
-                  <p className="text-xs text-slate-700 italic leading-snug">"{lead.aiSummary || lead.analysis}"</p>
+                  <p className="text-[11px] text-slate-700 italic leading-snug">"{lead.aiSummary || lead.analysis}"</p>
               </div>
           ) : (
             onAnalyze && (
                 <button 
                 onClick={handleAnalysis}
                 disabled={analyzing}
-                className="w-full py-1.5 mt-2 text-xs font-medium text-purple-600 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full py-1.5 mb-2 text-xs font-medium text-purple-600 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
                     {analyzing ? <Loader2 size={12} className="animate-spin" /> : <BrainCircuit size={12} />}
                     {analyzing ? "Analizando..." : "Analizar Estrategia"}
@@ -186,18 +186,28 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
             )
           )}
 
-          <div className="mt-3 flex gap-2">
-            {lead.status === 'exported_wc' && (
-            <span className="text-[10px] bg-green-100 text-green-700 font-medium px-2 py-1 rounded border border-green-200 w-full text-center">
-                Enviado a WhatsCloud
-            </span>
+          <div className="flex gap-2">
+            <button 
+                onClick={handleCRMUpdate}
+                disabled={updating}
+                className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+                {updating ? <Loader2 size={12} className="animate-spin" /> : <Clock size={12} />}
+                Seguimiento
+            </button>
+            {lead.mapsUrl && (
+                <a 
+                    href={lead.mapsUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()} 
+                    className="p-2 bg-slate-100 text-slate-400 hover:text-wc-blue rounded-lg transition-colors"
+                    title="Ver en Google Maps"
+                >
+                    <ExternalLink size={14} />
+                </a>
             )}
-            {lead.status === 'exported_crm' && (
-            <span className="text-[10px] bg-blue-100 text-blue-700 font-medium px-2 py-1 rounded border border-blue-200 w-full text-center">
-                Enviado a CRM
-            </span>
-            )}
-        </div>
+          </div>
       </div>
     </div>
   );

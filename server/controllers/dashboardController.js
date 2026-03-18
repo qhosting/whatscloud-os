@@ -89,18 +89,40 @@ export const getStats = async (req, res) => {
             return { name: range.label, value: count };
         }));
 
+        // 8. Leads by Status
+        const leadsByStatus = await Lead.findAll({
+            where: { organizationId },
+            attributes: [
+                ['status', 'status'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            group: ['status'],
+            raw: true
+        });
+
+        // 9. Overdue Follow-ups
+        const overdueFollowUps = await Lead.count({
+            where: {
+                organizationId,
+                followUpDate: { [sequelize.Sequelize.Op.lt]: new Date() },
+                status: { [sequelize.Sequelize.Op.notIn]: ['WON', 'LOST'] }
+            }
+        });
+
         res.json({
             summary: {
                 totalLeads,
                 highQualityLeads,
                 recentLeads,
                 creditsRemaining: credits,
-                estimatedROI: highQualityLeads * 250 // Simulated: Each HQ Lead worth $250
+                overdueFollowUps,
+                estimatedROI: highQualityLeads * 250
             },
             charts: {
                 leadsByNiche,
                 leadVolumeHistory,
-                scoreDistribution
+                scoreDistribution,
+                leadsByStatus
             }
         });
     } catch (e) {

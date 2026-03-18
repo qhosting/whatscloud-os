@@ -1,192 +1,279 @@
-
 import React, { useState, useEffect } from 'react';
-import { UserRole, ACCProfile } from '../types';
-import { PROD_CONFIG } from '../services/config';
-import { storageService } from '../services/storageService';
-// Added CreditCard to imports from lucide-react to fix error on line 186
-import { 
-  Shield, Server, Users, Activity, Zap, Database, RefreshCw, Terminal, Cpu, Search, Trash2, TrendingUp, AlertCircle, CreditCard
-} from 'lucide-react';
+import { accService } from '../services/accService';
+import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap } from 'lucide-react';
 
-interface AdminPanelProps {
-  onSyncACC: () => void;
-}
+export const AdminPanel: React.FC = () => {
+    const [organizations, setOrganizations] = useState<any[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics'>('orgs');
+    const [searchTerm, setSearchTerm] = useState('');
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onSyncACC }) => {
-  const [activeTab, setActiveTab] = useState<'hub' | 'users' | 'infra' | 'logs'>('hub');
-  const [logs, setLogs] = useState<any[]>([]);
-  const [stats, setStats] = useState({ online: 1240, leads: 8502, latency: '4ms' });
+    useEffect(() => {
+        loadData();
+    }, []);
 
-  useEffect(() => {
-    const loadLogs = () => {
-      const storedLogs = JSON.parse(localStorage.getItem('db_system_logs') || '[]');
-      setLogs(storedLogs);
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const orgs = await accService.adminGetAllOrgs();
+            const allUsers = await accService.adminGetAllUsers();
+            setOrganizations(orgs);
+            setUsers(allUsers);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
-    loadLogs();
-    const interval = setInterval(loadLogs, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
-  const handleClearLogs = () => {
-    localStorage.setItem('db_system_logs', '[]');
-    setLogs([]);
-  };
+    const handleAdjustCredits = async (userId: string) => {
+        const amountStr = prompt("¿Cuántos créditos deseas añadir (o restar)? Ej: 500 o -100");
+        if (!amountStr) return;
+        const amount = parseInt(amountStr);
+        const reason = prompt("Motivo del ajuste:", "Ajuste manual SuperAdmin");
+        
+        if (isNaN(amount)) return alert("Monto inválido");
 
-  const adjustCredits = async (userId: string, amount: number) => {
-    console.log(`[GOD MODE] Ajustando créditos para ${userId}: ${amount}`);
-    // En producción esto enviaría un query a PGSQL 16
-    alert(`Ajuste de ${amount} créditos procesado para el cluster.`);
-  };
+        try {
+            await accService.adminAdjustCredits(userId, amount, reason || '');
+            alert("Créditos ajustados satisfactoriamente.");
+            loadData(); // Reload to see changes
+        } catch (e) {
+            alert("Error al ajustar créditos");
+        }
+    };
 
-  return (
-    <div className="max-w-7xl mx-auto animate-in fade-in duration-500 pb-20">
-      <div className="bg-slate-950 text-white p-8 rounded-3xl shadow-2xl border border-slate-800 mb-8 relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-8 opacity-10"><Shield size={200} /></div>
-         <div className="relative z-10">
-             <div className="flex items-center gap-3 mb-2">
-                 <div className="bg-yellow-500/20 text-yellow-400 p-2 rounded-lg border border-yellow-500/50">
-                     <Zap size={20} fill="currentColor" />
-                 </div>
-                 <span className="text-yellow-500 font-bold tracking-widest text-xs uppercase">WhatsCloud.MX God Mode</span>
-             </div>
-             <h1 className="text-4xl font-bold mb-2 tracking-tighter">Panel de Control Supremo</h1>
-         </div>
-      </div>
+    const filteredOrgs = organizations.filter(o => 
+        o.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        o.slug?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-      <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-64 space-y-2">
-              <TabButton active={activeTab === 'hub'} onClick={() => setActiveTab('hub')} icon={<Server size={18} />} label="Estado Global" />
-              <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users size={18} />} label="Gestión Usuarios" />
-              <TabButton active={activeTab === 'infra'} onClick={() => setActiveTab('infra')} icon={<Terminal size={18} />} label="Infraestructura" />
-              <TabButton active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Activity size={18} />} label="Logs Sistema" />
-          </div>
+    const filteredUsers = users.filter(u => 
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-          <div className="flex-1 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-              {activeTab === 'hub' && (
-                  <div className="space-y-8">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <StatCard icon={<Users className="text-blue-500" />} label="Online" value={stats.online.toString()} />
-                          <StatCard icon={<Database className="text-purple-500" />} label="Total Leads" value={stats.leads.toString()} />
-                          <StatCard icon={<Zap className="text-yellow-500" />} label="Latencia" value={stats.latency} />
-                      </div>
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                          <h3 className="font-bold text-slate-800 mb-4">Salud del Cluster</h3>
-                          <div className="space-y-4">
-                              <HealthItem label="PostgreSQL 16 Engine" status="Healthy" />
-                              <HealthItem label="Redis Session Cache" status="Healthy" />
-                              <HealthItem label="N8N Worker Nodes" status="Scaling" />
-                          </div>
-                      </div>
-                  </div>
-              )}
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 gap-4 animate-in fade-in duration-700">
+                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="font-mono text-yellow-500 text-sm animate-pulse uppercase tracking-widest">Entering God Mode Protocol...</p>
+            </div>
+        );
+    }
 
-              {activeTab === 'users' && (
-                  <div className="space-y-6">
-                      <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold">Usuarios del Ecosistema</h3>
-                          <div className="relative">
-                              <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                              <input type="text" placeholder="Buscar email o ID..." className="pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm outline-none" />
-                          </div>
-                      </div>
-                      <div className="overflow-hidden border border-slate-100 rounded-2xl">
-                          <table className="w-full text-left">
-                              <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase">
-                                  <tr>
-                                      <th className="p-4">Usuario</th>
-                                      <th className="p-4">Rol</th>
-                                      <th className="p-4">Créditos</th>
-                                      <th className="p-4">Acción</th>
-                                  </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                  <UserRow name="Admin QHosting" email="admin@qhosting.net" role="SUPER_ADMIN" credits="∞" onAdjust={() => adjustCredits('wc_admin_god', 1000)} />
-                                  <UserRow name="Carlos Demo" email="carlos@whatscloud.mx" role="ACCOUNT_OWNER" credits="150" onAdjust={() => adjustCredits('wc_user_8821', 50)} />
-                              </tbody>
-                          </table>
-                      </div>
-                  </div>
-              )}
+    return (
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* HEADER: GOD MODE */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-slate-900 p-8 rounded-[2rem] border border-yellow-500/20 shadow-2xl shadow-yellow-500/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                    <Shield size={200} className="text-yellow-500" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20">
+                            <Shield className="text-yellow-500" size={24} />
+                        </div>
+                        <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em] font-mono">Access Level: Supreme</span>
+                    </div>
+                    <h1 className="text-5xl font-black text-white tracking-tighter leading-none mb-3">
+                        WhatsCloud<span className="text-yellow-500">.Control</span>
+                    </h1>
+                    <p className="text-slate-400 text-lg">Panel de Administración SaaS Multi-Tenant (GOD MODE)</p>
+                </div>
 
-              {activeTab === 'infra' && (
-                  <div className="space-y-6">
-                      <div className="bg-slate-900 text-white p-6 rounded-2xl font-mono text-sm border border-slate-800">
-                          <div className="flex items-center gap-2 mb-4 text-wc-blue">
-                              <Terminal size={18} />
-                              <span>System Environment Variables</span>
-                          </div>
-                          <p className="text-slate-400 mb-2">DB_URL=postgres://acc_prod:***@whatscloud-os-db:5432</p>
-                          <p className="text-slate-400 mb-2">REDIS_URI={PROD_CONFIG.REDIS.URI}</p>
-                          <p className="text-slate-400">GEMINI_MODEL=gemini-3-flash-preview</p>
-                      </div>
-                  </div>
-              )}
+                <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
+                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl flex items-center px-4 py-3 min-w-[300px]">
+                        <Search className="text-slate-500 mr-3" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar empresa o usuario..." 
+                            className="bg-transparent border-none text-white text-sm focus:ring-0 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
 
-              {activeTab === 'logs' && (
-                  <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold">System Events (Protocol 8888)</h3>
-                          <button onClick={handleClearLogs} className="text-xs text-red-500 font-bold hover:underline flex items-center gap-1">
-                              <Trash2 size={14} /> Limpiar Logs
-                          </button>
-                      </div>
-                      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                          {logs.length === 0 ? (
-                              <p className="text-center py-20 text-slate-400 italic">No hay eventos recientes en el cluster.</p>
-                          ) : (
-                              logs.map(log => (
-                                  <div key={log.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 font-mono text-[11px] flex items-start gap-3">
-                                      <span className="text-slate-400 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                      <span className={log.type === 'ERROR' ? 'text-red-500 font-bold' : 'text-blue-500'}>[{log.type}]</span>
-                                      <span className="text-slate-700">{log.message}</span>
-                                  </div>
-                              ))
-                          )}
-                      </div>
-                  </div>
-              )}
-          </div>
-      </div>
-    </div>
-  );
+            {/* QUICK STATS */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <StatCard icon={<Building2 className="text-blue-500" />} label="Empresas (Tenants)" value={organizations.length} color="blue" />
+                <StatCard icon={<Users className="text-emerald-500" />} label="Usuarios Totales" value={users.length} color="emerald" />
+                <StatCard icon={<Zap className="text-yellow-500" />} label="Créditos Circulantes" value={users.reduce((acc, u) => acc + (u.credits || 0), 0)} color="yellow" />
+                <StatCard icon={<TrendingUp className="text-purple-500" />} label="Planes Activos" value={organizations.filter(o => o.status === 'ACTIVE').length} color="purple" />
+            </div>
+
+            {/* TABS CONTROLLER */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+                <div className="flex border-b border-slate-100 p-2 bg-slate-50/50">
+                    <TabButton active={activeTab === 'orgs'} onClick={() => setActiveTab('orgs')} label="Empresas (Tenants)" icon={<Building2 size={16} />} color="blue" />
+                    <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuarios & Créditos" icon={<Users size={16} />} color="emerald" />
+                    <TabButton active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} label="Insights Globales" icon={<TrendingUp size={16} />} color="purple" />
+                </div>
+
+                <div className="p-6">
+                    {activeTab === 'orgs' && (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50/80">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Empresa / Tenant</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Plan</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Status</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Slug / ID</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Infra n8n</th>
+                                        <th className="px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredOrgs.map(org => (
+                                        <tr key={org.id} className="hover:bg-slate-50/50 transition-colors group text-sm">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                                        <Building2 size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-800">{org.name}</div>
+                                                        <div className="text-[10px] text-slate-400 font-mono">{org.id.split('-')[0]}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                    org.plan === 'PRO' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                                                    org.plan === 'ENTERPRISE' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                    'bg-slate-50 text-slate-400 border-slate-100'
+                                                }`}>
+                                                    {org.plan}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${org.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                                                    <span className="font-bold text-slate-700 capitalize">{org.status.toLowerCase()}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">{org.slug}</td>
+                                            <td className="px-6 py-4">
+                                                {org.n8nWebhookUrl ? (
+                                                    <span className="text-emerald-500 flex items-center gap-1 font-bold text-xs"><CheckCircle size={14} /> Linkeado</span>
+                                                ) : (
+                                                    <span className="text-slate-300 flex items-center gap-1 text-xs"><XCircle size={14} /> Pendiente</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button className="p-2 text-slate-400 hover:text-slate-800 transition-colors">
+                                                    <Settings size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="overflow-x-auto">
+                           <table className="w-full text-left">
+                                <thead className="bg-slate-50/80">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Usuario / Propietario</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Créditos</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Rol</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Organización</th>
+                                        <th className="px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredUsers.map(user => (
+                                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group text-sm">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs font-black">
+                                                        {user.email?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-800 truncate max-w-[200px]">{user.email}</div>
+                                                        <div className="text-[10px] text-slate-400 font-mono">ID: {user.id.split('-')[0]}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-slate-900 text-lg">{user.credits}</span>
+                                                    <CreditCard size={14} className="text-emerald-500 opacity-60" />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                                    user.role === 'SUPER_ADMIN' ? 'bg-yellow-500 text-black' : 
+                                                    user.role === 'ACCOUNT_OWNER' ? 'bg-slate-800 text-white' : 
+                                                    'bg-slate-100 text-slate-500'
+                                                }`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600 font-medium">
+                                                {user.organization?.name || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button 
+                                                    onClick={() => handleAdjustCredits(user.id)}
+                                                    className="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-bold shadow-sm shadow-emerald-500/10 flex items-center gap-2 ml-auto"
+                                                >
+                                                    <DollarSign size={14} /> Ajustar Créditos
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'metrics' && (
+                        <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                             <TrendingUp size={48} className="mx-auto text-slate-300 mb-4" />
+                             <h3 className="text-xl font-bold text-slate-800">Próximamente Metrics 3.0</h3>
+                             <p className="text-slate-500 max-w-sm mx-auto mt-2">Estamos integrando dashboards de facturación global y tiempo de ejecución de bots para el próximo ciclo de despliegue.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
 
-const TabButton = ({ active, onClick, icon, label }: any) => (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${active ? 'bg-slate-900 text-white shadow-xl translate-x-1' : 'text-slate-500 hover:bg-white/50'}`}>
-        {icon} <span>{label}</span>
+const StatCard: React.FC<{ icon: any, label: string, value: any, color: string }> = ({ icon, label, value, color }) => (
+    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all">
+        <div className="flex items-start justify-between mb-4">
+            <div className={`p-3 rounded-2xl bg-${color}-50`}>
+                {icon}
+            </div>
+            <div className={`text-[10px] font-black uppercase text-${color}-600 tracking-widest`}>
+                Live Data
+            </div>
+        </div>
+        <div className="text-3xl font-black text-slate-900 mb-1">{value}</div>
+        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{label}</div>
+    </div>
+);
+
+const TabButton: React.FC<{ active: boolean, onClick: () => void, label: string, icon: any, color: string }> = ({ active, onClick, label, icon, color }) => (
+    <button 
+        onClick={onClick}
+        className={`
+            flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all
+            ${active 
+                ? `bg-white text-slate-900 shadow-lg shadow-slate-200 ring-1 ring-slate-200` 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+            }
+        `}
+    >
+        {icon}
+        {label}
     </button>
-);
-
-const StatCard = ({ icon, label, value }: any) => (
-    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
-        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3">{icon}</div>
-        <div className="text-2xl font-black text-slate-900">{value}</div>
-        <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{label}</div>
-    </div>
-);
-
-const HealthItem = ({ label, status }: any) => (
-    <div className="flex justify-between items-center">
-        <span className="text-sm text-slate-600">{label}</span>
-        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-            {status}
-        </span>
-    </div>
-);
-
-const UserRow = ({ name, email, role, credits, onAdjust }: any) => (
-    <tr className="hover:bg-slate-50/50 transition-colors">
-        <td className="p-4">
-            <div className="font-bold text-slate-800 text-sm">{name}</div>
-            <div className="text-[10px] text-slate-500">{email}</div>
-        </td>
-        <td className="p-4"><span className="text-[10px] bg-slate-100 px-2 py-1 rounded font-bold">{role}</span></td>
-        <td className="p-4 font-mono font-bold text-wc-blue">{credits}</td>
-        <td className="p-4">
-            <button onClick={onAdjust} className="text-xs font-bold text-slate-400 hover:text-slate-900 flex items-center gap-1">
-                <CreditCard size={12} /> + CR
-            </button>
-        </td>
-    </tr>
 );

@@ -185,3 +185,26 @@ export const analyzeLead = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+export const updateLead = async (req, res) => {
+    const { id } = req.params;
+    const { status, notes, priority, followUpDate } = req.body;
+    try {
+        const lead = await Lead.findOne({
+            where: { id, organizationId: req.user.organizationId }
+        });
+        if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+        await lead.update({
+            status: status || lead.status,
+            notes: notes !== undefined ? notes : lead.notes,
+            priority: priority || lead.priority,
+            followUpDate: followUpDate !== undefined ? followUpDate : lead.followUpDate,
+            lastActivity: new Date()
+        });
+
+        res.json({ message: 'Lead updated', lead });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};

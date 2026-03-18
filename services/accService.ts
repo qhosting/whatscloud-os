@@ -264,5 +264,41 @@ export const accService = {
         console.error("[BOT-CONFIG-SAVE] Error:", error);
         throw error;
     }
+  },
+
+  // --- SUPER ADMIN METHODS ---
+  adminGetAllOrgs: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/organizations', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        return await response.json();
+    } catch (e) { return []; }
+  },
+
+  adminGetAllUsers: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/users', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        return await response.json();
+    } catch (e) { return []; }
+  },
+
+  adminAdjustCredits: async (userId: string, amount: number, reason: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/credits/adjust', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify({ userId, amount, reason })
+        });
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

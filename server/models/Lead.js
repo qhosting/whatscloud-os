@@ -62,6 +62,26 @@ export const Lead = sequelize.define('Lead', {
     aiSummary: {
         type: DataTypes.TEXT,
         allowNull: true,
+    },
+    status: {
+        type: DataTypes.STRING,
+        defaultValue: 'NEW'
+    },
+    followUpDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    lastActivity: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    },
+    notes: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    priority: {
+        type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH'),
+        defaultValue: 'MEDIUM'
     }
 }, {
     timestamps: true,
