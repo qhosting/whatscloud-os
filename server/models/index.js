@@ -7,6 +7,16 @@ import { VoiceCampaign } from './VoiceCampaign.js';
 import { Payment } from './Payment.js';
 import { AgentMemory } from './AgentMemory.js';
 
+import { WhatsAppConnection } from './WhatsAppConnection.js';
+import { Conversation } from './Conversation.js';
+import { Message } from './Message.js';
+import { AIPersona } from './AIPersona.js';
+
+import { Category } from './Category.js';
+import { Product } from './Product.js';
+import { Order } from './Order.js';
+import { OrderItem } from './OrderItem.js';
+
 // Relations
 Organization.hasMany(User, { foreignKey: 'organizationId', as: 'users' });
 User.belongsTo(Organization, { foreignKey: 'organizationId', as: 'organization' });
@@ -41,6 +51,47 @@ BotConfig.belongsTo(Organization, { foreignKey: 'organizationId' });
 User.hasOne(BotConfig, { foreignKey: 'userId' });
 BotConfig.belongsTo(User, { foreignKey: 'userId' });
 
+// ChatCenter Integration Relations
+Organization.hasMany(WhatsAppConnection, { foreignKey: 'organizationId' });
+WhatsAppConnection.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+Organization.hasMany(Conversation, { foreignKey: 'organizationId' });
+Conversation.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+Lead.hasMany(Conversation, { foreignKey: 'leadId' });
+Conversation.belongsTo(Lead, { foreignKey: 'leadId' });
+
+WhatsAppConnection.hasMany(Conversation, { foreignKey: 'connectionId' });
+Conversation.belongsTo(WhatsAppConnection, { foreignKey: 'connectionId' });
+
+Conversation.hasMany(Message, { foreignKey: 'conversationId', as: 'messages' });
+Message.belongsTo(Conversation, { foreignKey: 'conversationId' });
+
+Organization.hasMany(AIPersona, { foreignKey: 'organizationId' });
+AIPersona.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+// Commerce Integration Relations
+Organization.hasMany(Category, { foreignKey: 'organizationId' });
+Category.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+Organization.hasMany(Product, { foreignKey: 'organizationId' });
+Product.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+Organization.hasMany(Order, { foreignKey: 'organizationId' });
+Order.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+Category.hasMany(Product, { foreignKey: 'categoryId' });
+Product.belongsTo(Category, { foreignKey: 'categoryId' });
+
+Lead.hasMany(Order, { foreignKey: 'leadId' });
+Order.belongsTo(Lead, { foreignKey: 'leadId' });
+
+Order.hasMany(OrderItem, { foreignKey: 'orderId', as: 'items' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+
+Product.hasMany(OrderItem, { foreignKey: 'productId' });
+OrderItem.belongsTo(Product, { foreignKey: 'productId' });
+
 export {
     User,
     Organization,
@@ -49,5 +100,13 @@ export {
     BotConfig,
     VoiceCampaign,
     Payment,
-    AgentMemory
+    AgentMemory,
+    WhatsAppConnection,
+    Conversation,
+    Message,
+    AIPersona,
+    Category,
+    Product,
+    Order,
+    OrderItem
 };

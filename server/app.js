@@ -14,7 +14,21 @@ import { login, register } from './controllers/authController.js';
 import { verifyToken } from './middleware/authMiddleware.js';
 
 // Import Integration Controllers
-import { handleIncomingMessage } from './controllers/whatsappController.js';
+import { 
+  handleIncomingMessage, 
+  getInboxConversations, 
+  getConversationMessages, 
+  sendManualMessage 
+} from './controllers/whatsappController.js';
+import { 
+  getConnections, createConnection, updateConnectionStatus, deleteConnection,
+  getAIPersonas, saveAIPersona, deleteAIPersona
+} from './controllers/chatcenterController.js';
+import {
+  getCategories, createCategory, updateCategory, deleteCategory,
+  getProducts, createProduct, updateProduct, deleteProduct,
+  getOrders, updateOrderStatus
+} from './controllers/commerceController.js';
 import { initiateCall, createVoiceCampaign } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
@@ -161,6 +175,34 @@ app.post('/api/payments/:paymentId/approve', verifyToken, approvePayment);
 
 // --- AI AGENT ROUTES ---
 app.post('/api/agent/chat', verifyToken, handleAgentChat);
+
+// --- CHATCENTER / INBOX ROUTES ---
+app.get('/api/inbox/conversations', verifyToken, getInboxConversations);
+app.get('/api/inbox/conversations/:id/messages', verifyToken, getConversationMessages);
+app.post('/api/inbox/conversations/:id/send', verifyToken, sendManualMessage);
+
+app.get('/api/chatcenter/connections', verifyToken, getConnections);
+app.post('/api/chatcenter/connections', verifyToken, createConnection);
+app.put('/api/chatcenter/connections/:id', verifyToken, updateConnectionStatus);
+app.delete('/api/chatcenter/connections/:id', verifyToken, deleteConnection);
+
+app.get('/api/chatcenter/personas', verifyToken, getAIPersonas);
+app.post('/api/chatcenter/personas', verifyToken, saveAIPersona);
+app.delete('/api/chatcenter/personas/:id', verifyToken, deleteAIPersona);
+
+// --- COMMERCE ROUTES ---
+app.get('/api/commerce/categories', verifyToken, getCategories);
+app.post('/api/commerce/categories', verifyToken, createCategory);
+app.put('/api/commerce/categories/:id', verifyToken, updateCategory);
+app.delete('/api/commerce/categories/:id', verifyToken, deleteCategory);
+
+app.get('/api/commerce/products', verifyToken, getProducts);
+app.post('/api/commerce/products', verifyToken, createProduct);
+app.put('/api/commerce/products/:id', verifyToken, updateProduct);
+app.delete('/api/commerce/products/:id', verifyToken, deleteProduct);
+
+app.get('/api/commerce/orders', verifyToken, getOrders);
+app.put('/api/commerce/orders/:id/status', verifyToken, updateOrderStatus);
 
 // --- INTEGRATION ROUTES ---
 app.post('/webhook/whatsapp', handleIncomingMessage);

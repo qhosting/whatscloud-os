@@ -15,14 +15,16 @@ import { BillingModule } from './components/BillingModule';
 import { ConnectionsModule } from './components/ConnectionsModule';
 import { AdminPanel } from './components/AdminPanel';
 import { InsightsPanel } from './components/InsightsPanel';
-import { PostProcessingToolbar, ViewFilters } from './components/PostProcessingToolbar';
+import { ViewFilters, PostProcessingToolbar } from './components/PostProcessingToolbar';
 import { LandingPage } from './components/LandingPage';
+import { InboxModule } from './components/InboxModule';
+import { CommerceModule } from './components/CommerceModule';
 
 import { 
-  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock
+  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock, ShoppingBag
 } from 'lucide-react';
 
-type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing';
+type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing' | 'Inbox' | 'Commerce';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
@@ -250,7 +252,9 @@ const App: React.FC = () => {
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
             <SidebarItem icon={<Activity size={18} />} label="Tablero Principal" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<Search size={18} />} label="Lead Scrapper" active={activeModule === 'LeadScrapper'} onClick={() => setActiveModule('LeadScrapper')} setIsSidebarOpen={setIsSidebarOpen} />
-            <SidebarItem icon={<MessageSquare size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<MessageSquare size={18} />} label="Inbox de Chat" active={activeModule === 'Inbox'} onClick={() => setActiveModule('Inbox')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<Bot size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<ShoppingBag size={18} />} label="Comercio Digital" active={activeModule === 'Commerce'} onClick={() => setActiveModule('Commerce')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<MessageCircle size={18} />} label="SMS Reminder" active={activeModule === 'SMSReminder'} onClick={() => setActiveModule('SMSReminder')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<PhoneCall size={18} />} label="VoIP & PBX" active={activeModule === 'VoiceCampaigns'} onClick={() => setActiveModule('VoiceCampaigns')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<Wallet size={18} />} label="Facturación" active={activeModule === 'Billing'} onClick={() => setActiveModule('Billing')} setIsSidebarOpen={setIsSidebarOpen} />
@@ -516,6 +520,18 @@ const App: React.FC = () => {
                         </div>
                     )}
                  </div>
+             )}
+             {activeModule === 'Inbox' && (
+                <div className="max-w-7xl mx-auto h-[calc(100vh-10rem)]">
+                    <h1 className="text-3xl font-black text-slate-900 mb-6 tracking-tighter">Live <span className="text-wc-blue">Inbox</span></h1>
+                    <InboxModule />
+                </div>
+             )}
+             {activeModule === 'Commerce' && (
+                <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)]">
+                    <h1 className="text-4xl font-black text-slate-900 mb-6 tracking-tighter">Gestor de <span className="text-wc-blue">Catálogo y Pedidos</span></h1>
+                    <CommerceModule />
+                </div>
              )}
              {activeModule === 'BotBuilder' && <BotBuilder onSave={(config) => {
                  automationService.trigger({

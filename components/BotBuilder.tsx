@@ -58,6 +58,7 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
     temperature: 0.7,
     actions: []
   });
+  const [personaId, setPersonaId] = useState<string | null>(null);
 
   // STATE: SIMULATOR
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -88,14 +89,22 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
   useEffect(() => {
     const fetchData = async () => {
         try {
-            const configData = await accService.getBotConfig();
-            if (configData && !configData.error) {
-                setConfig({
-                    systemPrompt: configData.systemPrompt || INITIAL_PROMPT,
-                    knowledgeBase: configData.knowledgeBase || INITIAL_KB,
-                    temperature: configData.temperature || 0.7,
-                    actions: configData.actions || []
-                });
+            const token = localStorage.getItem('wc_auth_token');
+            const res = await fetch('/api/chatcenter/personas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const personas = await res.json();
+                if (personas && personas.length > 0) {
+                    const activePersona = personas[0];
+                    setPersonaId(activePersona.id);
+                    setConfig({
+                        systemPrompt: activePersona.systemPrompt || INITIAL_PROMPT,
+                        knowledgeBase: activePersona.knowledgeBase || INITIAL_KB,
+                        temperature: activePersona.temperature || 0.7,
+                        actions: activePersona.actions || []
+                    });
+                }
             }
         } catch (e) {
             console.error("Failed to load bot config from server", e);
@@ -505,9 +514,33 @@ export const BotBuilder: React.FC<BotBuilderProps> = ({ onSave, role }) => {
            <button 
              onClick={async () => {
                 try {
-                    await accService.saveBotConfig(config);
-                    onSave(config);
-                    alert("Configuración IA sincronizada con éxito en WhatsCloud PostgreSQL.");
+                    const token = localStorage.getItem('wc_auth_token');
+                    const payload = {
+                        id: personaId,
+                        name: 'Neural Agent',
+                        systemPrompt: config.systemPrompt,
+                        temperature: config.temperature,
+                        knowledgeBase: config.knowledgeBase,
+                        actions: config.actions,
+                        isActive: true
+                    };
+                    const res = await fetch('/api/chatcenter/personas', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (res.ok) {
+                        const savedPersona = await res.json();
+                        setPersonaId(savedPersona.id);
+                        onSave(config);
+                        alert("Configuración IA sincronizada con éxito en WhatsCloud PostgreSQL.");
+                    } else {
+                        throw new Error("Failed to save persona");
+                    }
                 } catch (e) {
                     alert("Error al guardar en el servidor.");
                 }
