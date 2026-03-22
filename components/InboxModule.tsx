@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, User, Search, RefreshCw, Bot, Check, CheckCheck, Clock } from 'lucide-react';
+import { MessageSquare, Send, User, Search, RefreshCw, Bot, Check, CheckCheck, Clock, ArrowLeft } from 'lucide-react';
 
 interface Conversation {
     id: string;
@@ -128,9 +128,9 @@ export const InboxModule: React.FC = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-12rem)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
+        <div className="flex h-[calc(100vh-14rem)] md:h-[calc(100vh-12rem)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
             {/* Conversations List (Left Panel) */}
-            <div className="w-1/3 border-r border-slate-200 flex flex-col bg-slate-50">
+            <div className={`${activeConvId ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 border-r border-slate-200 flex-col bg-slate-50`}>
                 <div className="p-4 border-b border-slate-200 bg-white">
                     <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                         <MessageSquare size={20} className="text-wc-blue" /> Inbox Omnicanal
@@ -184,7 +184,7 @@ export const InboxModule: React.FC = () => {
             </div>
 
             {/* Chat Area (Right Panel) */}
-            <div className="flex-1 flex flex-col bg-[#efeae2] relative">
+            <div className={`${activeConvId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-[#efeae2] relative`}>
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://static.whatsapp.net/env/6486/media/01f40cd2dfa8.png")', backgroundRepeat: 'repeat' }}></div>
 
@@ -192,13 +192,16 @@ export const InboxModule: React.FC = () => {
                     <>
                         {/* Chat Header */}
                         <div className="p-4 bg-white border-b border-slate-200 flex justify-between items-center z-10 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <button className="md:hidden p-2 -ml-2 text-slate-400 hover:text-slate-600" onClick={() => setActiveConvId(null)}>
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0">
                                     <User size={20} />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 leading-tight">{activeConv?.Lead.businessName || 'Cargando...'}</h3>
-                                    <p className="text-xs text-slate-500 font-mono">{activeConv?.Lead.phone}</p>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-slate-800 leading-tight truncate">{activeConv?.Lead.businessName || 'Cargando...'}</h3>
+                                    <p className="text-xs text-slate-500 font-mono truncate">{activeConv?.Lead.phone}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">

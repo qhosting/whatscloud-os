@@ -80,13 +80,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters, o
         </div>
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
         <button
           onClick={onSearch}
           disabled={isLoading || !filters.niche}
           className={`
-            px-8 py-3 rounded-xl font-bold text-white shadow-lg shadow-wc-blue/30
-            flex items-center gap-2 transition-all transform active:scale-95
+            w-full sm:w-auto px-8 py-3.5 sm:py-3 rounded-xl font-bold text-white shadow-lg shadow-wc-blue/30
+            flex items-center justify-center gap-2 transition-all transform active:scale-95
             ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-wc-gradient hover:opacity-90'}
           `}
         >

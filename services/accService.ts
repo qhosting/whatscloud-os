@@ -37,6 +37,25 @@ export const accService = {
     }
   },
 
+  updateLead: async (id: string, data: any): Promise<any> => {
+    try {
+      const token = localStorage.getItem('wc_auth_token');
+      const response = await fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to update lead');
+      return await response.json();
+    } catch (e) {
+      console.error("[LEAD-UPDATE] Error:", e);
+      throw e;
+    }
+  },
+
   // REGISTER REAL
   register: async (email: string, password: string): Promise<ACCProfile> => {
     try {
@@ -298,6 +317,61 @@ export const accService = {
             },
             body: JSON.stringify({ userId, amount, reason })
         });
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  // --- CRM TRACKER METHODS ---
+  getCrmMetrics: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/crm/organization-metrics', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch CRM metrics');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  getMyAgenda: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/crm/my-agenda', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch CRM agenda');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  createCrmTask: async (taskData: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/crm/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify(taskData)
+        });
+        if (!response.ok) throw new Error('Failed to create task');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  updateCrmTask: async (id: string, updates: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/crm/tasks/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify(updates)
+        });
+        if (!response.ok) throw new Error('Failed to update task');
         return await response.json();
     } catch (e) { throw e; }
   }

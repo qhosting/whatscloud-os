@@ -16,6 +16,7 @@ import { Category } from './Category.js';
 import { Product } from './Product.js';
 import { Order } from './Order.js';
 import { OrderItem } from './OrderItem.js';
+import { CrmTask } from './CrmTask.js';
 
 // Relations
 Organization.hasMany(User, { foreignKey: 'organizationId', as: 'users' });
@@ -92,6 +93,16 @@ OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
 Product.hasMany(OrderItem, { foreignKey: 'productId' });
 OrderItem.belongsTo(Product, { foreignKey: 'productId' });
 
+// CRM Tracker Relations
+Organization.hasMany(CrmTask, { foreignKey: 'organizationId' });
+CrmTask.belongsTo(Organization, { foreignKey: 'organizationId' });
+
+User.hasMany(CrmTask, { foreignKey: 'assignedTo', as: 'tasks' });
+CrmTask.belongsTo(User, { foreignKey: 'assignedTo', as: 'agent' });
+
+Lead.hasMany(CrmTask, { foreignKey: 'leadId', as: 'tasks' });
+CrmTask.belongsTo(Lead, { foreignKey: 'leadId' });
+
 export {
     User,
     Organization,
@@ -108,5 +119,6 @@ export {
     Category,
     Product,
     Order,
-    OrderItem
+    OrderItem,
+    CrmTask
 };

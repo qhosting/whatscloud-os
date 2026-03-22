@@ -40,8 +40,10 @@ import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
 import { verifySuperAdmin } from './middleware/adminMiddleware.js';
 import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits } from './controllers/superAdminController.js';
+import { getDashboardMetrics, getMyAgenda, createTask, updateTask } from './controllers/crmController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
+import { startNotificationCron } from './services/notificationCron.js';
 import { validate } from './middleware/validate.js';
 import { registerSchema, loginSchema, scrapeSchema, callSchema, deductionsSchema } from './validations/schemas.js';
 import client from 'prom-client';
@@ -149,6 +151,9 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info('Running Scheduled Backup...');
     performBackup();
   });
+  
+  // Start CRM Tracker Overdue Notification Cron
+  startNotificationCron();
 }
 
 // --- QUEUE WORKERS ---
@@ -211,6 +216,12 @@ app.post('/api/call', verifyToken, validate(callSchema), initiateCall);
 
 // --- CREDIT ROUTES ---
 app.post('/api/credits/deduct', verifyToken, validate(deductionsSchema), deductCredits);
+
+// --- CRM TRACKER ROUTES ---
+app.get('/api/crm/organization-metrics', verifyToken, getDashboardMetrics);
+app.get('/api/crm/my-agenda', verifyToken, getMyAgenda);
+app.post('/api/crm/tasks', verifyToken, createTask);
+app.put('/api/crm/tasks/:id', verifyToken, updateTask);
 
 // API Routes
 app.get('/api/health', async (req, res) => {

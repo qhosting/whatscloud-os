@@ -136,12 +136,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                         onClick={handleCall}
                         disabled={calling}
                         className={`
-                            p-2 rounded-full transition-colors flex items-center justify-center
+                            p-2.5 min-w-[44px] min-h-[44px] rounded-full transition-colors flex items-center justify-center
                             ${calling ? 'bg-green-500 text-white animate-pulse' : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-600'}
                         `}
                         title="Llamar vía Issabel PBX"
                     >
-                        {calling ? <Loader2 size={14} className="animate-spin" /> : <PhoneCall size={14} />}
+                        {calling ? <Loader2 size={16} className="animate-spin" /> : <PhoneCall size={16} />}
                     </button>
                 )}
             </div>
@@ -178,9 +178,9 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                 <button 
                 onClick={handleAnalysis}
                 disabled={analyzing}
-                className="w-full py-1.5 mb-2 text-xs font-medium text-purple-600 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full py-2.5 min-h-[44px] mb-2 text-xs font-medium text-purple-600 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
-                    {analyzing ? <Loader2 size={12} className="animate-spin" /> : <BrainCircuit size={12} />}
+                    {analyzing ? <Loader2 size={14} className="animate-spin" /> : <BrainCircuit size={14} />}
                     {analyzing ? "Analizando..." : "Analizar Estrategia"}
                 </button>
             )
@@ -190,9 +190,9 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
             <button 
                 onClick={handleCRMUpdate}
                 disabled={updating}
-                className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-[44px] text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
             >
-                {updating ? <Loader2 size={12} className="animate-spin" /> : <Clock size={12} />}
+                {updating ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
                 Seguimiento
             </button>
             {lead.mapsUrl && (
@@ -201,10 +201,10 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                     target="_blank" 
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()} 
-                    className="p-2 bg-slate-100 text-slate-400 hover:text-wc-blue rounded-lg transition-colors"
+                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-slate-100 text-slate-400 hover:text-wc-blue rounded-lg transition-colors"
                     title="Ver en Google Maps"
                 >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={16} />
                 </a>
             )}
           </div>

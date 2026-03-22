@@ -40,13 +40,22 @@ export const exportLeadToIntegrations = async (lead, organization) => {
 
     // 3. ACC CRM (Generic Webhook)
     if (organization.accWebhookUrl) {
+        // Enviar payload extendido con metadata de LeadScrapper
         promises.push(
             axios.post(organization.accWebhookUrl, {
                 lead: {
-                    fullName: lead.name,
+                    fullName: lead.businessName || lead.name,
                     phone: lead.phone,
+                    email: lead.email,
                     location: lead.city,
-                    industry: lead.niche
+                    industry: lead.niche,
+                    metrics: {
+                        aiScore: lead.aiScore,
+                        rating: lead.rating,
+                        reviews: lead.reviews
+                    },
+                    socials: lead.metadata?.socials || {},
+                    website: lead.website
                 }
             }).catch(e => logger.error(`[ACC] Export failed: ${e.message}`))
         );

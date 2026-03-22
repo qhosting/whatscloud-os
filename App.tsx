@@ -19,12 +19,13 @@ import { ViewFilters, PostProcessingToolbar } from './components/PostProcessingT
 import { LandingPage } from './components/LandingPage';
 import { InboxModule } from './components/InboxModule';
 import { CommerceModule } from './components/CommerceModule';
+import { SalesTrackerModule } from './components/crm/SalesTrackerModule';
 
 import { 
-  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock, ShoppingBag
+  CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock, ShoppingBag, Calendar
 } from 'lucide-react';
 
-type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing' | 'Inbox' | 'Commerce';
+type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 'VoiceCampaigns' | 'Connections' | 'AdminPanel' | 'Billing' | 'Inbox' | 'Commerce' | 'SalesTracker';
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
@@ -251,6 +252,7 @@ const App: React.FC = () => {
         
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
             <SidebarItem icon={<Activity size={18} />} label="Tablero Principal" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} setIsSidebarOpen={setIsSidebarOpen} />
+            <SidebarItem icon={<Calendar size={18} />} label="CRM y Tareas" active={activeModule === 'SalesTracker'} onClick={() => setActiveModule('SalesTracker')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<Search size={18} />} label="Lead Scrapper" active={activeModule === 'LeadScrapper'} onClick={() => setActiveModule('LeadScrapper')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<MessageSquare size={18} />} label="Inbox de Chat" active={activeModule === 'Inbox'} onClick={() => setActiveModule('Inbox')} setIsSidebarOpen={setIsSidebarOpen} />
             <SidebarItem icon={<Bot size={18} />} label="BotBuilder IA" active={activeModule === 'BotBuilder'} onClick={() => setActiveModule('BotBuilder')} setIsSidebarOpen={setIsSidebarOpen} />
@@ -314,6 +316,23 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* MOBILE BOTTOM NAVIGATION (PWA OPTIMIZED) */}
+      <nav 
+        className="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur-xl border-t border-slate-200 z-40 flex justify-around items-center"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      >
+          <MobileNavItem icon={<Activity size={20} />} label="Tablero" active={activeModule === 'Dashboard'} onClick={() => setActiveModule('Dashboard')} />
+          <MobileNavItem icon={<Calendar size={20} />} label="Agenda" active={activeModule === 'SalesTracker'} onClick={() => setActiveModule('SalesTracker')} />
+          <MobileNavItem icon={<MessageSquare size={20} />} label="Inbox" active={activeModule === 'Inbox'} onClick={() => setActiveModule('Inbox')} />
+          <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex flex-col items-center justify-center w-16 h-full text-slate-400 hover:text-wc-blue transition-colors"
+          >
+              <Menu size={20} />
+              <span className="text-[10px] font-bold mt-1">Más</span>
+          </button>
+      </nav>
+
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen w-full overflow-hidden">
           <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-8 shadow-sm">
@@ -322,9 +341,9 @@ const App: React.FC = () => {
                     className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                     onClick={() => setIsSidebarOpen(true)}
                   >
-                      <Menu size={24} />
+                      <Hexagon size={24} className="text-wc-blue" />
                   </button>
-                  <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                  <div className="hidden md:flex items-center gap-2 text-slate-400 text-sm font-medium">
                      <Hexagon size={14} className="text-wc-blue" />
                      <span className="hidden sm:inline">/</span>
                      <span className="text-slate-800 font-black tracking-tight uppercase text-xs">{activeModule}</span>
@@ -345,7 +364,7 @@ const App: React.FC = () => {
               </div>
           </header>
 
-          <main className="flex-grow p-8 overflow-y-auto bg-[#FBFDFF]">
+          <main className="flex-grow p-4 md:p-8 overflow-y-auto bg-[#FBFDFF] pb-24 md:pb-8">
              {activeModule === 'Dashboard' && (
                 <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
                     <h1 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">Dashboard <span className="text-wc-blue">Real-Time</span></h1>
@@ -527,6 +546,11 @@ const App: React.FC = () => {
                     <InboxModule />
                 </div>
              )}
+             {activeModule === 'SalesTracker' && (
+                 <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)]">
+                    <SalesTrackerModule />
+                 </div>
+             )}
              {activeModule === 'Commerce' && (
                 <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)]">
                     <h1 className="text-4xl font-black text-slate-900 mb-6 tracking-tighter">Gestor de <span className="text-wc-blue">Catálogo y Pedidos</span></h1>
@@ -605,6 +629,17 @@ const SidebarItem = ({ icon, label, active, onClick, setIsSidebarOpen }: { icon:
       className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-bold text-sm ${active ? 'bg-wc-gradient text-white shadow-lg shadow-wc-blue/20 translate-x-1' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
     >
         {icon} <span className="tracking-tight">{label}</span>
+    </button>
+);
+
+const MobileNavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) => (
+    <button 
+        onClick={onClick}
+        className={`flex flex-col items-center justify-center w-16 h-full transition-colors relative ${active ? 'text-wc-blue' : 'text-slate-400 hover:text-slate-600'}`}
+    >
+        {icon}
+        <span className="text-[10px] font-bold mt-1 tracking-tight">{label}</span>
+        {active && <div className="absolute top-0 w-8 h-1 bg-wc-blue rounded-b-full"></div>}
     </button>
 );
 
