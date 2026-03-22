@@ -5,6 +5,7 @@ import { accService } from '../../services/accService';
 export const OwnerDashboard = () => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadMetrics();
@@ -12,16 +13,31 @@ export const OwnerDashboard = () => {
 
     const loadMetrics = async () => {
         try {
+            setError(null);
             const data = await accService.getCrmMetrics();
             setStats(data);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            setError(e.message || "Error de conexión con el servidor");
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading || !stats) return <div className="flex h-full items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-4 border-wc-blue border-t-transparent"></div></div>;
+    if (loading) return <div className="flex h-full items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-4 border-wc-blue border-t-transparent"></div></div>;
+    
+    if (error || !stats) return (
+        <div className="flex flex-col h-full items-center justify-center p-8 bg-slate-50 text-center gap-4">
+            <XCircle size={48} className="text-red-400" />
+            <div>
+                <h3 className="text-xl font-bold text-slate-800">Error al cargar métricas</h3>
+                <p className="text-sm text-slate-500">{error || "No se recibieron datos del servidor"}</p>
+            </div>
+            <button onClick={loadMetrics} className="mt-4 px-6 py-2 bg-wc-blue text-white rounded-lg font-bold shadow-md hover:bg-blue-600 transition-colors">
+                Reintentar
+            </button>
+        </div>
+    );
 
     const { funnel, tasks } = stats;
     
