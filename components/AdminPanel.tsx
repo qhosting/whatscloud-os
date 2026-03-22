@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { accService } from '../services/accService';
-import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap } from 'lucide-react';
+import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
+    const [wahaSessions, setWahaSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics'>('orgs');
+    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha'>('orgs');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -18,8 +19,10 @@ export const AdminPanel: React.FC = () => {
         try {
             const orgs = await accService.adminGetAllOrgs();
             const allUsers = await accService.adminGetAllUsers();
+            const sessions = await accService.adminGetAllWahaSessions().catch(() => []);
             setOrganizations(orgs);
             setUsers(allUsers);
+            setWahaSessions(sessions);
         } catch (e) {
             console.error(e);
         } finally {
@@ -109,6 +112,7 @@ export const AdminPanel: React.FC = () => {
                 <div className="flex border-b border-slate-100 p-2 bg-slate-50/50">
                     <TabButton active={activeTab === 'orgs'} onClick={() => setActiveTab('orgs')} label="Empresas (Tenants)" icon={<Building2 size={16} />} color="blue" />
                     <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuarios & Créditos" icon={<Users size={16} />} color="emerald" />
+                    <TabButton active={activeTab === 'waha'} onClick={() => setActiveTab('waha')} label="Motor WAHA" icon={<Smartphone size={16} />} color="orange" />
                     <TabButton active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} label="Insights Globales" icon={<TrendingUp size={16} />} color="purple" />
                 </div>
 
@@ -229,6 +233,58 @@ export const AdminPanel: React.FC = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'waha' && (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50/80">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Session ID (Tenant)</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Status / Worker</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Info Adicional</th>
+                                        <th className="px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {wahaSessions.map(session => (
+                                        <tr key={session.name} className="hover:bg-slate-50/50 transition-colors group text-sm">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-800 font-mono text-xs">{session.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider ${
+                                                    session.status === 'WORKING' ? 'bg-green-100 text-green-700' : 
+                                                    session.status === 'SCAN_QR_CODE' ? 'bg-blue-100 text-blue-700' : 
+                                                    'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {session.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 text-xs font-mono">
+                                                Me: {session.me?.user || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button 
+                                                    onClick={async () => {
+                                                        if(confirm(`⚠️ CUIDADO: Forzar cierre a la sesión ${session.name}? El cliente tendrá que re-escanear su código QR.`)) {
+                                                            await accService.adminDeleteWahaSession(session.name);
+                                                            loadData();
+                                                        }
+                                                    }}
+                                                    className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 ml-auto"
+                                                >
+                                                    <XCircle size={14} /> Matar Sesión
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {wahaSessions.length === 0 && (
+                                        <tr><td colSpan={4} className="text-center py-10 text-slate-400 font-bold">No hay sesiones de WAHA activas en el cluster.</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>

@@ -390,5 +390,77 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to create lead');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  // --- WAHA API SESSIONS ---
+  startWahaSession: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/waha/start', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to start session');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+  
+  getWahaSessionStatus: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/waha/status', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        // We do not throw on 404/not active to avoid console spam during polling
+        if (!response.ok) return { status: 'STOPPED' };
+        return await response.json();
+    } catch (e) { return { status: 'STOPPED' }; }
+  },
+
+  getWahaQrBlobUrl: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/waha/qr', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('No QR ready');
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    } catch (e) { throw e; }
+  },
+
+  stopWahaSession: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/waha/stop', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to stop session');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminGetAllWahaSessions: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/waha/sessions', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch WAHA sessions');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminDeleteWahaSession: async (session: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/admin/waha/sessions/${session}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to delete WAHA session');
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

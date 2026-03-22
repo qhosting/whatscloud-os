@@ -41,6 +41,10 @@ import { getStats } from './controllers/dashboardController.js';
 import { verifySuperAdmin } from './middleware/adminMiddleware.js';
 import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits } from './controllers/superAdminController.js';
 import { getDashboardMetrics, getMyAgenda, createTask, updateTask } from './controllers/crmController.js';
+import { 
+    startWahaSession, getWahaSessionStatus, getWahaQr, stopWahaSession, 
+    getAllWahaSessions, deleteWahaSessionAdmin 
+} from './controllers/wahaController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
 import { startNotificationCron } from './services/notificationCron.js';
@@ -194,6 +198,12 @@ app.delete('/api/chatcenter/connections/:id', verifyToken, deleteConnection);
 app.get('/api/chatcenter/personas', verifyToken, getAIPersonas);
 app.post('/api/chatcenter/personas', verifyToken, saveAIPersona);
 app.delete('/api/chatcenter/personas/:id', verifyToken, deleteAIPersona);
+
+// --- WAHA / WHATSAPP QR SESSIONS ---
+app.post('/api/waha/start', verifyToken, startWahaSession);
+app.get('/api/waha/status', verifyToken, getWahaSessionStatus);
+app.get('/api/waha/qr', verifyToken, getWahaQr);
+app.post('/api/waha/stop', verifyToken, stopWahaSession);
 
 // --- COMMERCE ROUTES ---
 app.get('/api/commerce/categories', verifyToken, getCategories);
@@ -367,6 +377,10 @@ app.get('/api/admin/organizations', verifyToken, verifySuperAdmin, getAllOrganiz
 app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
 app.put('/api/admin/organizations/:id', verifyToken, verifySuperAdmin, updateOrganization);
 app.post('/api/admin/credits/adjust', verifyToken, verifySuperAdmin, adjustUserCredits);
+
+// --- ADMIN WAHA MANAGEMENT ---
+app.get('/api/admin/waha/sessions', verifyToken, verifySuperAdmin, getAllWahaSessions);
+app.delete('/api/admin/waha/sessions/:session', verifyToken, verifySuperAdmin, deleteWahaSessionAdmin);
 
 // --- DASHBOARD ---
 app.get('/api/dashboard/stats', verifyToken, getStats);

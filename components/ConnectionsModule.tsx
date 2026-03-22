@@ -15,6 +15,7 @@ import {
   Server,
   Save
 } from 'lucide-react';
+import { WahaConnectionCard } from './WahaConnectionCard';
 
 interface ConnectionsModuleProps {
   onCreateChannel: (data: { name: string; phoneNumber: string }) => void;
@@ -116,6 +117,11 @@ export const ConnectionsModule: React.FC<ConnectionsModuleProps> = ({ onCreateCh
                             </div>
                         </form>
                     </div>
+                )}
+
+                {/* WAHA DIRECT CONNECTION */}
+                {canManage && (
+                     <WahaConnectionCard />
                 )}
 
                 {/* CHANNELS LIST */}
