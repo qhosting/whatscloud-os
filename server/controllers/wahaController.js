@@ -3,7 +3,10 @@ import logger from '../config/logger.js';
 import { WhatsAppConnection } from '../models/index.js';
 
 const getWahaUrl = () => process.env.WAHA_URL || 'http://localhost:3000';
-const getWahaHeaders = () => ({ 'X-Api-Key': process.env.WAHA_API_KEY || '' });
+const getWahaHeaders = () => {
+    const key = process.env.WAHA_API_KEY;
+    return key ? { 'X-Api-Key': key } : {};
+};
 const getTenantSessionName = (orgId) => `tenant_${orgId}`;
 
 export const startWahaSession = async (req, res) => {
