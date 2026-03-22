@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle } from 'lucide-react';
+import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { accService } from '../../services/accService';
+import { NewLeadModal } from './NewLeadModal';
 
 export const OwnerDashboard = () => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         loadMetrics();
@@ -55,9 +57,17 @@ export const OwnerDashboard = () => {
                     </h1>
                     <p className="text-slate-500 font-medium">Vista Global de la Organización Métrica y Equipo</p>
                 </div>
-                <div className="text-right">
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Win Rate</div>
-                    <div className="text-3xl font-black text-emerald-600">{conversionRate}%</div>
+                <div className="flex flex-col items-end gap-3">
+                    <div className="text-right">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Win Rate</div>
+                        <div className="text-3xl font-black text-emerald-600">{conversionRate}%</div>
+                    </div>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-wc-gradient text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95"
+                    >
+                        <Plus size={14} /> Nuevo Prospecto
+                    </button>
                 </div>
             </div>
 
@@ -111,6 +121,12 @@ export const OwnerDashboard = () => {
                     <FunnelStage label="Ganados" count={funnel.WON || 0} color="bg-emerald-100 text-emerald-800 border-emerald-200" max={totalLeads} />
                 </div>
             </div>
+
+            <NewLeadModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                onSuccess={() => loadMetrics()} 
+            />
         </div>
     );
 };

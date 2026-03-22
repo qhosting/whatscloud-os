@@ -374,5 +374,21 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to update task');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  createLead: async (leadData: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/leads', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify(leadData)
+        });
+        if (!response.ok) throw new Error('Failed to create lead');
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

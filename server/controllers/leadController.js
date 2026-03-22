@@ -208,3 +208,52 @@ export const updateLead = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+/**
+ * @openapi
+ * /api/leads:
+ *   post:
+ *     summary: Create a manual lead
+ *     tags: [Leads]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               businessName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               niche:
+ *                 type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Lead created
+ */
+export const createLead = async (req, res) => {
+    try {
+        const { businessName, phone, niche, notes, email } = req.body;
+        
+        const newLead = await Lead.create({
+            businessName,
+            phone,
+            niche,
+            notes,
+            email,
+            organizationId: req.user.organizationId,
+            status: 'NEW',
+            source: 'MANUAL',
+            aiScore: 0
+        });
+
+        res.status(201).json(newLead);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};

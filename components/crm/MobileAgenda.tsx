@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, AlertCircle, Phone, MessageSquare, MapPin } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, AlertCircle, Phone, MessageSquare, MapPin, Plus } from 'lucide-react';
 import { accService } from '../../services/accService';
+import { NewLeadModal } from './NewLeadModal';
 
 interface CrmTask {
     id: string;
@@ -15,6 +16,7 @@ interface CrmTask {
 export const MobileAgenda = () => {
     const [tasks, setTasks] = useState<CrmTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         loadAgenda();
@@ -145,6 +147,20 @@ export const MobileAgenda = () => {
                     </div>
                 </div>
             )}
+
+            {/* FAB - Nuevo Lead */}
+            <button 
+                onClick={() => setIsModalOpen(true)}
+                className="fixed bottom-24 md:bottom-10 right-6 w-14 h-14 bg-wc-gradient text-white rounded-full shadow-xl shadow-wc-blue/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-30"
+            >
+                <Plus size={28} />
+            </button>
+
+            <NewLeadModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                onSuccess={() => loadAgenda()} 
+            />
         </div>
     );
 };

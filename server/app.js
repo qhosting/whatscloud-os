@@ -32,7 +32,7 @@ import {
 import { initiateCall, createVoiceCampaign } from './controllers/voipController.js';
 import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
-import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead, updateLead } from './controllers/leadController.js';
+import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead, updateLead, createLead } from './controllers/leadController.js';
 import { requestRecharge, uploadReceipt, approvePayment, getPayments } from './controllers/paymentController.js';
 import { handleAgentChat } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
@@ -350,6 +350,7 @@ app.get('/api/scrape/:jobId', verifyToken, async (req, res) => {
 });
 
 // --- LEAD MANAGEMENT ---
+app.post('/api/leads', verifyToken, createLead);
 app.get('/api/leads', verifyToken, getLeads);
 app.get('/api/leads/export', verifyToken, exportLeads);
 app.get('/api/leads/:id', verifyToken, getLeadDetail);
