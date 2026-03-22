@@ -9,6 +9,10 @@ export const AdminPanel: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha'>('orgs');
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Modal State
+    const [editingOrg, setEditingOrg] = useState<any>(null);
+    const [isSavingOrg, setIsSavingOrg] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -44,6 +48,27 @@ export const AdminPanel: React.FC = () => {
             loadData(); // Reload to see changes
         } catch (e) {
             alert("Error al ajustar créditos");
+        }
+    };
+
+    const handleSaveOrg = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingOrg) return;
+        setIsSavingOrg(true);
+        try {
+            await accService.adminUpdateOrg(editingOrg.id, {
+                plan: editingOrg.plan,
+                status: editingOrg.status,
+                n8nWebhookUrl: editingOrg.n8nWebhookUrl,
+                amiHost: editingOrg.amiHost
+            });
+            // alert('Empresa actualizada correctamente');
+            setEditingOrg(null);
+            loadData();
+        } catch (e) {
+            alert('Error al actualizar empresa');
+        } finally {
+            setIsSavingOrg(false);
         }
     };
 
@@ -168,7 +193,10 @@ export const AdminPanel: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button className="p-2 text-slate-400 hover:text-slate-800 transition-colors">
+                                                <button 
+                                                    onClick={() => setEditingOrg(org)}
+                                                    className="p-2 text-slate-400 hover:text-slate-800 transition-colors"
+                                                >
                                                     <Settings size={18} />
                                                 </button>
                                             </td>
@@ -322,6 +350,92 @@ export const AdminPanel: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* EDIT ORG MODAL */}
+            {editingOrg && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center relative">
+                            <div>
+                                <h3 className="font-black text-lg text-slate-800 tracking-tight">Configurar Tenant</h3>
+                                <p className="text-xs font-mono text-slate-500 mt-1">{editingOrg.name} ({editingOrg.slug})</p>
+                            </div>
+                            <button onClick={() => setEditingOrg(null)} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 p-2 rounded-full transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto">
+                            <form id="editOrgForm" onSubmit={handleSaveOrg} className="space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Plan</label>
+                                        <select 
+                                            value={editingOrg.plan || 'FREE'}
+                                            onChange={(e) => setEditingOrg({...editingOrg, plan: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+                                        >
+                                            <option value="FREE">Free</option>
+                                            <option value="PRO">Pro</option>
+                                            <option value="ENTERPRISE">Enterprise</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Estado</label>
+                                        <select 
+                                            value={editingOrg.status || 'ACTIVE'}
+                                            onChange={(e) => setEditingOrg({...editingOrg, status: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+                                        >
+                                            <option value="ACTIVE">Active</option>
+                                            <option value="SUSPENDED">Suspended</option>
+                                            <option value="CANCELLED">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="border-t border-dashed border-slate-200 pt-5">
+                                    <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                        <Building2 size={16} className="text-slate-400" /> Integraciones
+                                    </h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Webhook n8n Cloud (API)</label>
+                                            <input 
+                                                type="url"
+                                                placeholder="https://tu-n8n.com/webhook/..."
+                                                value={editingOrg.n8nWebhookUrl || ''}
+                                                onChange={(e) => setEditingOrg({...editingOrg, n8nWebhookUrl: e.target.value})}
+                                                className="w-full font-mono text-sm px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all placeholder:text-slate-300"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">IP Servidor PBX (Issabel/Asterisk)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text"
+                                                    placeholder="192.168.x.x o hostname"
+                                                    value={editingOrg.amiHost || ''}
+                                                    onChange={(e) => setEditingOrg({...editingOrg, amiHost: e.target.value})}
+                                                    className="w-full font-mono text-sm px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all placeholder:text-slate-300 pl-10"
+                                                />
+                                                <Smartphone size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+                            <button type="button" onClick={() => setEditingOrg(null)} className="flex-1 px-4 py-3 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition-all">
+                                Cancelar
+                            </button>
+                            <button type="submit" form="editOrgForm" disabled={isSavingOrg} className="flex-1 px-4 py-3 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2 rounded-xl shadow-lg shadow-slate-900/20 transition-all active:scale-95">
+                                {isSavingOrg ? <CheckCircle className="animate-pulse" size={16} /> : <Settings size={16} />}
+                                Guardar Configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

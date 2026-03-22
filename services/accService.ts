@@ -462,5 +462,21 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to delete WAHA session');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  adminUpdateOrg: async (id: string, data: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/admin/organizations/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${tokenAuth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update organization');
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

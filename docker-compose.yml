@@ -47,7 +47,7 @@ services:
   waha:
     image: devlikeapro/waha
     environment:
-      - WHATSAPP_DEFAULT_ENGINE=NOWEB
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
     ports:
       - "3001:3000"
     restart: always
