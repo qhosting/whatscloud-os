@@ -67,7 +67,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
   return (
     <div 
       className={`
-        relative p-5 rounded-xl border-2 transition-all duration-200 cursor-pointer group flex flex-col justify-between h-full
+        relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group flex flex-col justify-between h-full
         ${selected 
           ? 'border-wc-blue bg-blue-50/50 shadow-md' 
           : 'border-slate-100 bg-white hover:border-wc-blue/30 hover:shadow-sm'
@@ -165,13 +165,13 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-100">
+      <div className="mt-3 pt-3 border-t border-slate-100">
           {(lead.aiSummary || lead.analysis) ? (
-              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 mb-3">
+              <div className="bg-purple-50 p-2.5 rounded-lg border border-purple-100 mb-2">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-purple-600 mb-1 uppercase tracking-wide">
                       <BrainCircuit size={12} /> Estrategia IA
                   </div>
-                  <p className="text-[11px] text-slate-700 italic leading-snug">"{lead.aiSummary || lead.analysis}"</p>
+                  <p className="text-[11px] text-slate-700 italic leading-snug line-clamp-2">"{lead.aiSummary || lead.analysis}"</p>
               </div>
           ) : (
             onAnalyze && (

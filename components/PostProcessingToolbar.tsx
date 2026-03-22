@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, Star, Mail, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Filter, Star, Mail, ArrowUpDown, ChevronDown, Database } from 'lucide-react';
 
 export interface ViewFilters {
   minRating: number;
@@ -12,17 +12,16 @@ interface PostProcessingToolbarProps {
   setFilters: (f: ViewFilters) => void;
   totalResults: number;
   visibleResults: number;
+  selectedCount?: number;
+  onExport?: () => void;
 }
 
 export const PostProcessingToolbar: React.FC<PostProcessingToolbarProps> = ({ 
-    filters, 
-    setFilters, 
-    totalResults, 
-    visibleResults 
+    filters,  setFilters,  totalResults,  visibleResults, selectedCount = 0, onExport
 }) => {
   
   return (
-    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-500">
+    <div className="bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-200 shadow-xl shadow-slate-200/50 mb-6 flex flex-col lg:flex-row items-center justify-between gap-4 sticky top-[72px] md:top-20 z-20 animate-in fade-in duration-500">
        
        {/* LEFT: FILTERS */}
        <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
@@ -85,9 +84,20 @@ export const PostProcessingToolbar: React.FC<PostProcessingToolbarProps> = ({
              </div>
           </div>
 
-          <div className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">
+          <div className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded hidden sm:block">
              {visibleResults} / {totalResults}
           </div>
+          
+          {onExport && selectedCount > 0 && (
+            <button 
+                onClick={onExport} 
+                className="bg-slate-900 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95 ml-2"
+            >
+                <Database size={14} /> 
+                <span className="hidden sm:inline">Exportar a CRM</span> 
+                <span className="sm:hidden">Exp</span> ({selectedCount})
+            </button>
+          )}
        </div>
 
     </div>

@@ -460,23 +460,17 @@ const App: React.FC = () => {
              )}
              {activeModule === 'LeadScrapper' && (
                  <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                        <div>
-                            <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter leading-none">
-                                Lead<span className="text-transparent bg-clip-text bg-wc-gradient">Scrapper</span> 2.0
-                            </h1>
-                            <p className="text-slate-500 text-lg max-w-xl">Genera prospectos de alta calidad con <strong>Inteligencia Artificial</strong> en segundos.</p>
+                    {!(leads.length > 0 && !isScraping) && (
+                        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                            <div>
+                                <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter leading-none">
+                                    Lead<span className="text-transparent bg-clip-text bg-wc-gradient">Scrapper</span> 2.0
+                                </h1>
+                                <p className="text-slate-500 text-lg max-w-xl">Genera prospectos de alta calidad con <strong>Inteligencia Artificial</strong> en segundos.</p>
+                            </div>
                         </div>
-                        {leads.length > 0 && (
-                            <button 
-                                onClick={exportLeads} 
-                                className="bg-slate-900 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95"
-                            >
-                                <Database size={16} /> Exportar {selectedLeads.size} a CRM Corporativo
-                            </button>
-                        )}
-                    </div>
-                    <FilterPanel filters={filters} setFilters={setFilters} onSearch={handleSearch} isLoading={isScraping} />
+                    )}
+                    <FilterPanel filters={filters} setFilters={setFilters} onSearch={handleSearch} isLoading={isScraping} isCompact={leads.length > 0 && !isScraping} />
                     
                     {isScraping && (
                         <div className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 shadow-2xl flex flex-col items-center gap-6 animate-pulse">
@@ -501,8 +495,15 @@ const App: React.FC = () => {
                     {leads.length > 0 && !isScraping && (
                         <div className="space-y-6">
                              <InsightsPanel leads={leads} city={filters.city || 'Mercado Global'} />
-                             <PostProcessingToolbar filters={viewFilters} setFilters={setViewFilters} totalResults={leads.length} visibleResults={processedLeads.length} />
-                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                             <PostProcessingToolbar 
+                                filters={viewFilters} 
+                                setFilters={setViewFilters} 
+                                totalResults={leads.length} 
+                                visibleResults={processedLeads.length} 
+                                selectedCount={selectedLeads.size}
+                                onExport={exportLeads}
+                             />
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
                                 {processedLeads.map(lead => (
                                     <LeadCard 
                                       key={lead.id} 
