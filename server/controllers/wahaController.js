@@ -1,6 +1,6 @@
 import axios from 'axios';
 import logger from '../config/logger.js';
-import { WhatsAppConnection } from '../models/index.js';
+import { WhatsAppConnection, Organization } from '../models/index.js';
 
 const getWahaUrl = () => process.env.WAHA_URL || 'http://localhost:3000';
 const getWahaHeaders = () => {
@@ -8,12 +8,15 @@ const getWahaHeaders = () => {
     if (!key || key.trim() === '' || key === 'undefined') return {};
     return { 'X-Api-Key': key };
 };
-const getTenantSessionName = (orgId) => `tenant_${orgId}`;
+const getTenantSessionName = (identifier) => identifier;
 
 export const startWahaSession = async (req, res) => {
     try {
         const { organizationId } = req.user;
-        const sessionName = getTenantSessionName(organizationId);
+        const org = await Organization.findByPk(organizationId);
+        if (!org || !org.slug) throw new Error('Organización no encontrada o sin slug configurado');
+
+        const sessionName = getTenantSessionName(org.slug);
         const wahaUrl = getWahaUrl();
 
         await axios.post(`${wahaUrl}/api/sessions/start`, {
@@ -46,7 +49,10 @@ export const startWahaSession = async (req, res) => {
 export const getWahaSessionStatus = async (req, res) => {
     try {
         const { organizationId } = req.user;
-        const sessionName = getTenantSessionName(organizationId);
+        const org = await Organization.findByPk(organizationId);
+        if (!org || !org.slug) throw new Error('Organización sin slug');
+        
+        const sessionName = getTenantSessionName(org.slug);
         const wahaUrl = getWahaUrl();
 
         const statusResponse = await axios.get(`${wahaUrl}/api/sessions/${sessionName}`, {
@@ -74,7 +80,8 @@ export const getWahaSessionStatus = async (req, res) => {
 export const getWahaQr = async (req, res) => {
     try {
         const { organizationId } = req.user;
-        const sessionName = getTenantSessionName(organizationId);
+        const org = await Organization.findByPk(organizationId);
+        const sessionName = getTenantSessionName(org?.slug || organizationId);
         const wahaUrl = getWahaUrl();
 
         // Solicitar el QR. Intentamos obtenerlo como buffer primero.
@@ -125,7 +132,8 @@ export const getWahaQr = async (req, res) => {
 export const stopWahaSession = async (req, res) => {
     try {
         const { organizationId } = req.user;
-        const sessionName = getTenantSessionName(organizationId);
+        const org = await Organization.findByPk(organizationId);
+        const sessionName = getTenantSessionName(org?.slug || organizationId);
         const wahaUrl = getWahaUrl();
 
         await axios.post(`${wahaUrl}/api/sessions/${sessionName}/logout`, {}, {

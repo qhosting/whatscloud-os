@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { accService } from '../services/accService';
-import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone } from 'lucide-react';
+import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone, Activity } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
@@ -65,6 +65,7 @@ export const AdminPanel: React.FC = () => {
         try {
             await accService.adminUpdateOrg(editingOrg.id, {
                 name: editingOrg.name,
+                slug: editingOrg.slug,
                 plan: editingOrg.plan,
                 status: editingOrg.status,
                 n8nWebhookUrl: editingOrg.n8nWebhookUrl,
@@ -477,6 +478,19 @@ export const AdminPanel: React.FC = () => {
                                         onChange={(e) => setEditingOrg({...editingOrg, name: e.target.value})}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all font-bold text-slate-800"
                                     />
+                                </div>
+                                <div className="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest flex items-center gap-1">
+                                       <Activity size={10} className="text-amber-500" /> Slug / ID Motor WAHA
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        placeholder="neurondas"
+                                        value={editingOrg.slug || ''}
+                                        onChange={(e) => setEditingOrg({...editingOrg, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
+                                        className="w-full px-4 py-2 bg-white rounded-xl border border-slate-200 outline-none focus:border-amber-500 transition-all font-mono text-xs text-amber-700 font-bold"
+                                    />
+                                    <p className="text-[9px] text-slate-400 mt-2 italic font-medium">Este será el nombre visible en Easypanel: <strong>{editingOrg.slug || 'neurondas'}</strong></p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>

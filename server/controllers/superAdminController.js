@@ -32,13 +32,14 @@ export const getAllUsers = async (req, res) => {
 // UPDATE ORGANIZATION (Plan, Status, etc)
 export const updateOrganization = async (req, res) => {
     const { id } = req.params;
-    const { name, plan, status, n8nWebhookUrl, amiHost, subscriptionPlanId } = req.body;
+    const { name, slug, plan, status, n8nWebhookUrl, amiHost, subscriptionPlanId } = req.body;
     try {
         const org = await Organization.findByPk(id);
         if (!org) return res.status(404).json({ error: 'Org not found' });
 
         await org.update({ 
             name: name !== undefined ? name : org.name,
+            slug: slug !== undefined ? slug : org.slug,
             plan: plan || org.plan, 
             status: status || org.status,
             n8nWebhookUrl: n8nWebhookUrl !== undefined ? n8nWebhookUrl : org.n8nWebhookUrl,
