@@ -332,9 +332,14 @@ export const AdminPanel: React.FC = () => {
                                                     {session.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500 text-xs font-mono">
-                                                Me: {session.me?.user || 'N/A'}
-                                            </td>
+                                             <td className="px-6 py-4">
+                                                 <div className="flex items-center gap-2">
+                                                     <Smartphone size={12} className="text-slate-400" />
+                                                     <span className="font-mono text-xs font-black text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
+                                                         {session.me?.id?.split('@')[0] || session.me?.user || 'Sín Vincular'}
+                                                     </span>
+                                                 </div>
+                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button 
                                                     onClick={async () => {
@@ -632,13 +637,50 @@ export const AdminPanel: React.FC = () => {
                                                     className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 font-bold text-sm"
                                                 />
                                             </div>
-                                            <div className="flex-1">
-                                                <label className="block text-[9px] font-black text-slate-500 mb-1">Max Msg WAHA</label>
+                                            <div className="flex-1 text-center bg-slate-100/50 p-2 rounded-xl">
+                                                <label className="block text-[8px] font-black text-slate-400 mb-1 uppercase tracking-widest">Base Quota (Legacy)</label>
+                                                <span className="font-bold text-slate-400 text-xs">{editingPlan.limits?.maxMessages || 1000}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-green-50/50 p-3 rounded-2xl border border-green-100">
+                                                <label className="block text-[9px] font-black tracking-widest text-green-600 mb-1 uppercase">Cuota WhatsApp</label>
                                                 <input 
                                                     type="number"
-                                                    value={editingPlan.limits?.maxMessages || 1000}
-                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxMessages: parseInt(e.target.value) || 0 }})}
-                                                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 font-bold text-sm"
+                                                    value={editingPlan.limits?.maxWaMessages || 0}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxWaMessages: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full bg-transparent border-none font-black text-lg text-green-700 focus:ring-0 p-0"
+                                                />
+                                            </div>
+                                            <div className="bg-blue-50/50 p-3 rounded-2xl border border-blue-100">
+                                                <label className="block text-[9px] font-black tracking-widest text-blue-600 mb-1 uppercase">Cuota SMS</label>
+                                                <input 
+                                                    type="number"
+                                                    value={editingPlan.limits?.maxSms || 0}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxSms: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full bg-transparent border-none font-black text-lg text-blue-700 focus:ring-0 p-0"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-orange-50/50 p-3 rounded-2xl border border-orange-100">
+                                                <label className="block text-[9px] font-black tracking-widest text-orange-600 mb-1 uppercase">Límite Leads</label>
+                                                <input 
+                                                    type="number"
+                                                    value={editingPlan.limits?.maxLeads || 0}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxLeads: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full bg-transparent border-none font-black text-lg text-orange-700 focus:ring-0 p-0"
+                                                />
+                                            </div>
+                                            <div className="bg-purple-50/50 p-3 rounded-2xl border border-purple-100">
+                                                <label className="block text-[9px] font-black tracking-widest text-purple-600 mb-1 uppercase">Minutos PBX</label>
+                                                <input 
+                                                    type="number"
+                                                    value={editingPlan.limits?.maxPbxMinutes || 0}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxPbxMinutes: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full bg-transparent border-none font-black text-lg text-purple-700 focus:ring-0 p-0"
                                                 />
                                             </div>
                                         </div>

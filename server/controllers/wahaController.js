@@ -157,16 +157,30 @@ export const getAllWahaSessions = async (req, res) => {
         const wahaUrl = getWahaUrl();
         const response = await axios.get(`${wahaUrl}/api/sessions`, {
             headers: getWahaHeaders()
-        }).catch(e => { throw e; });
+        });
 
-        res.json(response.data);
+        const sessions = response.data;
+        
+        // Fetch detailed info for each session to get the phone number (me.id)
+        const detailedSessions = await Promise.all(sessions.map(async (sess) => {
+            try {
+                const detail = await axios.get(`${wahaUrl}/api/sessions/${sess.name}`, {
+                    headers: getWahaHeaders()
+                });
+                return {
+                    ...sess,
+                    me: detail.data.me,
+                    status: detail.data.status
+                };
+            } catch (err) {
+                return sess;
+            }
+        }));
+
+        res.json(detailedSessions);
     } catch (e) {
-         const errorData = e.response?.data;
-         logger.error(`[WAHA Admin] get all sessions error: ${e.message} - Data: ${JSON.stringify(errorData)}`);
-         res.status(e.response?.status || 500).json({ 
-             error: e.message,
-             details: errorData
-         });
+        logger.error(`[WAHA-ADMIN] get all sessions: ${e.message}`);
+        res.status(500).json({ error: e.message });
     }
 };
 

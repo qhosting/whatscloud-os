@@ -17,12 +17,33 @@ export const Organization = sequelize.define('Organization', {
         unique: true,
     },
     plan: {
-        type: DataTypes.ENUM('FREE', 'PRO', 'ENTERPRISE'),
+        type: DataTypes.STRING, // Changed from ENUM to STRING for dynamic plans
         defaultValue: 'FREE',
     },
     status: {
         type: DataTypes.ENUM('ACTIVE', 'SUSPENDED', 'CANCELLED'),
         defaultValue: 'ACTIVE',
+    },
+    // Usage Quotas (Current Period)
+    waUsage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    smsUsage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    leadsUsage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    pbxUsage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    subscriptionPlanId: {
+        type: DataTypes.UUID,
+        allowNull: true,
     },
     // Integration Fields
     n8nWebhookUrl: {

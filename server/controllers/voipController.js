@@ -3,6 +3,7 @@ import { Organization, VoiceCampaign, User } from '../models/index.js';
 import { initiateTwilioCall } from '../services/voipService.js';
 import { voiceQueue } from '../queues/voiceQueue.js';
 import logger from '../config/logger.js';
+import { checkAndDeductQuota } from '../utils/billing.js';
 
 let ami = null;
 
@@ -16,9 +17,10 @@ export const createVoiceCampaign = async (req, res) => {
     }
 
     try {
-        const user = await User.findByPk(userId);
-        if (user.credits < cost) {
-            return res.status(403).json({ error: 'Insufficient credits' });
+        // --- BILLING: Check PBX Quota ---
+        const quota = await checkAndDeductQuota(organizationId, 'pbxMinutes', audience.length); // Assume 1 min per lead initially or just check availability
+        if (!quota.success) {
+            return res.status(403).json({ error: quota.error });
         }
 
         // Create Campaign
@@ -36,8 +38,8 @@ export const createVoiceCampaign = async (req, res) => {
             status: scheduledAt ? 'scheduled' : 'pending'
         });
 
-        // Deduct credits
-        await user.decrement('credits', { by: cost });
+        // Deduct/Increment logic already handled by checkAndDeductQuota above
+        // await user.decrement('credits', { by: cost }); // REMOVED LEGACY CREDITS
 
         // Queue for immediate processing if not scheduled
         if (!scheduledAt) {
@@ -89,6 +91,12 @@ export const initiateCall = async (req, res) => {
     try {
         const org = await Organization.findByPk(user.organizationId);
         if (!org) return res.status(404).json({ error: 'Organization not found' });
+
+        // --- BILLING: Check PBX Quota (1 min start) ---
+        const quota = await checkAndDeductQuota(user.organizationId, 'pbxMinutes', 1);
+        if (!quota.success) {
+            return res.status(403).json({ error: quota.error });
+        }
 
         // Strategy selection
         // 1. Try Twilio if configured

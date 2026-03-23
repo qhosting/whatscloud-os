@@ -1,6 +1,7 @@
 import { User, Organization, CreditTransaction } from '../models/index.js';
 import { sendLabsMobileSms } from '../services/smsService.js';
 import logger from '../config/logger.js';
+import { checkAndDeductQuota } from '../utils/billing.js';
 
 export const createSmsCampaign = async (req, res) => {
     const { campaignName, message, audience, cost } = req.body;
@@ -15,19 +16,17 @@ export const createSmsCampaign = async (req, res) => {
         const user = await User.findByPk(userId);
         const org = await Organization.findByPk(organizationId);
 
-        if (user.credits < cost) {
-            return res.status(403).json({ error: 'Insufficient credits' });
-        }
-
-        logger.info(`[SMS-CAMPAIGN] Starting campaign "${campaignName}" for Org ${organizationId}`);
-
-        // Success Tracking
-        let sentCount = 0;
-        let failCount = 0;
-
         // Process sequentially (could be backgrounded, but for now simple)
         for (const lead of audience) {
             try {
+                // --- BILLING: Check Quota per SMS ---
+                const quota = await checkAndDeductQuota(organizationId, 'sms', 1);
+                if (!quota.success) {
+                    logger.warn(`[BILLING] SMS quota reached for org ${organizationId}: ${quota.error}`);
+                    failCount++;
+                    continue; // Stop or continue? Let's continue for those already processed if any, but better fail remaining
+                }
+
                 // Replace variables in message
                 let sanitizedMessage = message
                     .replace(/{{nombre_negocio}}/g, lead.name || 'Cliente')
@@ -40,9 +39,6 @@ export const createSmsCampaign = async (req, res) => {
                 failCount++;
             }
         }
-
-        // Deduct credits
-        await user.decrement('credits', { by: cost });
 
         // Log transaction
         await CreditTransaction.create({

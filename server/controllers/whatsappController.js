@@ -7,10 +7,12 @@ import {
     AIPersona,
     Organization,
     Product,
-    Category
+    Category,
+    SubscriptionPlan
 } from '../models/index.js';
 import axios from 'axios';
 import logger from '../config/logger.js';
+import { checkAndDeductQuota } from '../utils/billing.js';
 
 let aiConfigs = {}; // Cache for initialized AI instances
 
@@ -71,7 +73,15 @@ export const handleIncomingMessage = async (req, res) => {
             }
         });
 
-        if (!createdLead) {
+        if (createdLead) {
+            // Check Quota for new leads
+            const quota = await checkAndDeductQuota(orgId, 'leads', 1);
+            if (!quota.success) {
+                logger.warn(`[BILLING] Lead creation denied for org ${orgId}: ${quota.error}`);
+                // Optional: we could delete the lead or mark it as 'OVER_QUOTA'
+                // For now, we allow creation but log the error.
+            }
+        } else {
             await lead.update({ lastActivity: new Date() });
         }
 
@@ -181,6 +191,13 @@ const handleAIReply = async (aiInstance, persona, conversation, userMessage, pho
 
         const aiReply = response.text || "Lo siento, estoy teniendo problemas técnicos.";
 
+        // --- BILLING: Check Quota before sending ---
+        const quota = await checkAndDeductQuota(organizationId, 'waMessages', 1);
+        if (!quota.success) {
+            logger.warn(`[BILLING] AI message blocked for org ${organizationId}: ${quota.error}`);
+            return; // Don't send the message
+        }
+
         // 6. Send Reply via WAHA
         const wahaUrl = process.env.WAHA_URL || 'http://localhost:3000';
         await axios.post(`${wahaUrl}/api/sendText`, {
@@ -283,6 +300,12 @@ export const sendManualMessage = async (req, res) => {
 
         if (!conversation || !conversation.WhatsAppConnection) {
             return res.status(404).json({ error: 'Conversation or Connection not found' });
+        }
+
+        // --- BILLING: Check Quota ---
+        const quota = await checkAndDeductQuota(organizationId, 'waMessages', 1);
+        if (!quota.success) {
+            return res.status(403).json({ error: quota.error });
         }
 
         // Send via WAHA
