@@ -84,72 +84,18 @@ export const ConnectionsModule: React.FC<ConnectionsModuleProps> = ({ onCreateCh
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* LEFT COLUMN: WHATSAPP/CHATWOOT (2/3 width) */}
+          {/* LEFT COLUMN: WHATSAPP/WAHA (2/3 width) */}
           <div className="lg:col-span-2 space-y-6">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                        <MessageSquare className="text-green-500" /> WhatsApp API Gateways
+                    <h3 className="font-black text-slate-800 flex items-center gap-2 text-xl tracking-tight">
+                        <MessageSquare className="text-green-500" /> WhatsApp <span className="text-green-500 text-sm font-black uppercase tracking-widest pl-2">Engine</span>
                     </h3>
-                    {canManage && (
-                        <button onClick={() => setIsCreating(true)} className="text-xs bg-wc-gradient text-white px-3 py-1.5 rounded-lg font-bold shadow hover:opacity-90 flex items-center gap-1">
-                            <Plus size={14} /> Nuevo
-                        </button>
-                    )}
                 </div>
-
-                {/* CREATE CARD */}
-                {isCreating && (
-                    <div className="bg-white p-6 rounded-2xl border-2 border-wc-blue shadow-lg relative overflow-hidden animate-in zoom-in-95">
-                        <div className="absolute top-0 right-0 bg-wc-blue text-white px-3 py-1 text-xs font-bold rounded-bl-xl">NUEVO</div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><QrCode className="text-wc-blue" /> Conectar WhatsApp</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
-                                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none text-sm" autoFocus />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Número</label>
-                                <input type="text" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none text-sm font-mono" />
-                            </div>
-                            <div className="pt-2 flex gap-3">
-                                <button type="button" onClick={() => setIsCreating(false)} className="flex-1 py-2 text-slate-500 text-sm font-semibold hover:bg-slate-50 rounded-lg">Cancelar</button>
-                                <button type="submit" className="flex-1 py-2 bg-wc-blue text-white text-sm font-bold rounded-lg shadow-md hover:bg-blue-600">Crear Canal</button>
-                            </div>
-                        </form>
-                    </div>
-                )}
 
                 {/* WAHA DIRECT CONNECTION */}
                 {canManage && (
                      <WahaConnectionCard />
                 )}
-
-                {/* CHANNELS LIST */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {channels.map(channel => (
-                    <div key={channel.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-xl ${channel.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
-                                    <Smartphone size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 text-sm">{channel.name}</h3>
-                                    <p className="text-[10px] text-slate-500 font-mono">{channel.identifier}</p>
-                                </div>
-                            </div>
-                            <div className={`w-2 h-2 rounded-full ${channel.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`}></div>
-                        </div>
-                        <div className="flex gap-2 opacity-80">
-                            {canManage ? (
-                                <button className="flex-1 py-1.5 text-[10px] font-bold text-slate-600 border border-slate-200 rounded hover:bg-slate-50">Configurar</button>
-                            ) : (
-                                <div className="flex-1 py-1.5 text-[10px] text-center bg-slate-50 text-slate-400 rounded"><Lock size={10} className="inline mr-1" /> Locked</div>
-                            )}
-                        </div>
-                    </div>
-                    ))}
-                </div>
           </div>
 
           {/* RIGHT COLUMN: ISSABEL PBX (1/3 width) */}

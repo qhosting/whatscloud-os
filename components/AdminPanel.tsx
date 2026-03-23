@@ -527,11 +527,11 @@ export const AdminPanel: React.FC = () => {
                                 </div>
                                 <div className="border-t border-dashed border-slate-200 pt-5">
                                     <h4 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                        <Building2 size={16} className="text-slate-400" /> Integraciones
+                                        <Zap size={16} className="text-purple-500" /> Automatizaciones & Voz
                                     </h4>
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Webhook n8n Cloud (API)</label>
+                                            <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Webhook n8n (Integración)</label>
                                             <input 
                                                 type="url"
                                                 placeholder="https://tu-n8n.com/webhook/..."
