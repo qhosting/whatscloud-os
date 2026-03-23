@@ -61,7 +61,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         <div className="max-w-2xl text-center lg:text-left relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-wc-green text-xs font-bold mb-6 animate-in fade-in slide-in-from-bottom-4">
             <Zap size={12} fill="currentColor" />
-            PRODUCCIÓN: WHATSCLOUD-OS ONLINE
+            PRODUCCIÓN: WHATSCLOUD ONLINE
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -102,20 +102,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
       </section>
 
       {/* FLOATING WHATSAPP BUTTON */}
-      {supportNumber && (
-        <a 
-          href={`https://wa.me/${supportNumber}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-8 right-8 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
-          title="Soporte WhatsApp"
-        >
-          <MessageCircle size={28} fill="currentColor" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
-            Soporte WhatsCloud
-          </span>
-        </a>
-      )}
+      <a 
+        href={`https://wa.me/${supportNumber || '5219991234567'}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+        title="Soporte WhatsApp"
+      >
+        <MessageCircle size={28} fill="currentColor" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
+          Soporte WhatsCloud
+        </span>
+      </a>
 
       {/* FOOTER */}
       <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500 text-sm">

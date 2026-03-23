@@ -1,5 +1,5 @@
 export const PROD_CONFIG = {
-  DOMAIN: 'WhatsCloud.MX',
+  DOMAIN: 'WhatsCloud',
   DATABASE: {
     NAME: 'whatscloud-os-db',
     VERSION: 'PostgreSQL 16',

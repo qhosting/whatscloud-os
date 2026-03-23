@@ -111,7 +111,7 @@ const App: React.FC = () => {
 
   const handleSearch = async () => {
     if (!profile || profile.credits <= 0) {
-      alert("Créditos insuficientes en WhatsCloud.MX");
+      alert("Créditos insuficientes en WhatsCloud");
       return;
     }
     setScanProgress(0);
