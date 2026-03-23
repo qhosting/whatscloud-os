@@ -64,6 +64,7 @@ export const AdminPanel: React.FC = () => {
         setIsSavingOrg(true);
         try {
             await accService.adminUpdateOrg(editingOrg.id, {
+                name: editingOrg.name,
                 plan: editingOrg.plan,
                 status: editingOrg.status,
                 n8nWebhookUrl: editingOrg.n8nWebhookUrl,
@@ -466,10 +467,20 @@ export const AdminPanel: React.FC = () => {
                             </button>
                         </div>
                         <div className="p-6 overflow-y-auto">
-                            <form id="editOrgForm" onSubmit={handleSaveOrg} className="space-y-5">
+                            <form id="editOrgForm" onSubmit={handleSaveOrg} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Nombre de la Organización</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Tenant Name"
+                                        value={editingOrg.name || ''}
+                                        onChange={(e) => setEditingOrg({...editingOrg, name: e.target.value})}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all font-bold text-slate-800"
+                                    />
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Plan</label>
+                                        <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Plan Maestro</label>
                                         <select 
                                             value={editingOrg.subscriptionPlanId || editingOrg.plan || 'FREE'}
                                             onChange={(e) => setEditingOrg({...editingOrg, subscriptionPlanId: e.target.value})}
