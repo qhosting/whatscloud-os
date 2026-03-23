@@ -274,22 +274,7 @@ const App: React.FC = () => {
           <X size={20} />
         </button>
 
-        {/* STATUS WIDGET */}
-        <div className="p-4 bg-black/40 m-4 rounded-xl border border-white/5 font-mono shadow-inner">
-            <h4 className="text-[9px] font-bold text-slate-500 uppercase mb-3 flex items-center gap-1">
-                <Network size={10} /> Infrastructure Health
-            </h4>
-            <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-slate-400">whatscloud-os-db</span>
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-slate-400">qhosting_redis</span>
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                </div>
-            </div>
-        </div>
+
 
         {/* USER PROFILE CARD */}
         <div className="p-4 border-t border-white/5 bg-slate-950/50">
