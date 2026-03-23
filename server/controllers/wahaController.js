@@ -5,7 +5,8 @@ import { WhatsAppConnection } from '../models/index.js';
 const getWahaUrl = () => process.env.WAHA_URL || 'http://localhost:3000';
 const getWahaHeaders = () => {
     const key = process.env.WAHA_API_KEY;
-    return key ? { 'X-Api-Key': key } : {};
+    if (!key || key.trim() === '' || key === 'undefined') return {};
+    return { 'X-Api-Key': key };
 };
 const getTenantSessionName = (orgId) => `tenant_${orgId}`;
 
@@ -33,8 +34,12 @@ export const startWahaSession = async (req, res) => {
 
         res.json({ success: true, session: sessionName });
     } catch (e) {
-        logger.error(`[WAHA] start exception: ${e.message}`);
-        res.status(500).json({ error: e.message });
+        const errorData = e.response?.data;
+        logger.error(`[WAHA] start exception: ${e.message} - Data: ${JSON.stringify(errorData)}`);
+        res.status(e.response?.status || 500).json({ 
+            error: e.message, 
+            details: errorData 
+        });
     }
 };
 
@@ -123,8 +128,12 @@ export const getAllWahaSessions = async (req, res) => {
 
         res.json(response.data);
     } catch (e) {
-         logger.error(`[WAHA Admin] get all sessions: ${e.message}`);
-         res.status(500).json({ error: e.message });
+         const errorData = e.response?.data;
+         logger.error(`[WAHA Admin] get all sessions error: ${e.message} - Data: ${JSON.stringify(errorData)}`);
+         res.status(e.response?.status || 500).json({ 
+             error: e.message,
+             details: errorData
+         });
     }
 };
 

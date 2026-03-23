@@ -41,7 +41,8 @@ export const updateOrganization = async (req, res) => {
             plan: plan || org.plan, 
             status: status || org.status,
             n8nWebhookUrl: n8nWebhookUrl !== undefined ? n8nWebhookUrl : org.n8nWebhookUrl,
-            amiHost: amiHost !== undefined ? amiHost : org.amiHost
+            amiHost: amiHost !== undefined ? amiHost : org.amiHost,
+            subscriptionPlanId: req.body.subscriptionPlanId !== undefined ? req.body.subscriptionPlanId : org.subscriptionPlanId
         });
 
         res.json({ message: 'Organization updated', org });

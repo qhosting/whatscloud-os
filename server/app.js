@@ -45,6 +45,7 @@ import {
     startWahaSession, getWahaSessionStatus, getWahaQr, stopWahaSession, 
     getAllWahaSessions, deleteWahaSessionAdmin 
 } from './controllers/wahaController.js';
+import { getAllPlans, createPlan, updatePlan, deletePlan } from './controllers/planController.js';
 import cron from 'node-cron';
 import { performBackup } from './services/backupService.js';
 import { startNotificationCron } from './services/notificationCron.js';
@@ -373,10 +374,17 @@ app.get('/api/bot/config', verifyToken, getBotConfig);
 app.post('/api/bot/config', verifyToken, updateBotConfig);
 
 // --- ADMIN PANEL (TENANT MANAGEMENT) ---
+// Super Admin Routes
 app.get('/api/admin/organizations', verifyToken, verifySuperAdmin, getAllOrganizations);
-app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
 app.put('/api/admin/organizations/:id', verifyToken, verifySuperAdmin, updateOrganization);
+app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
 app.post('/api/admin/credits/adjust', verifyToken, verifySuperAdmin, adjustUserCredits);
+
+// Custom Plans Management (God Mode)
+app.get('/api/admin/plans', verifyToken, verifySuperAdmin, getAllPlans);
+app.post('/api/admin/plans', verifyToken, verifySuperAdmin, createPlan);
+app.put('/api/admin/plans/:id', verifyToken, verifySuperAdmin, updatePlan);
+app.delete('/api/admin/plans/:id', verifyToken, verifySuperAdmin, deletePlan);
 
 // --- ADMIN WAHA MANAGEMENT ---
 app.get('/api/admin/waha/sessions', verifyToken, verifySuperAdmin, getAllWahaSessions);

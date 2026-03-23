@@ -6,13 +6,18 @@ export const AdminPanel: React.FC = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [wahaSessions, setWahaSessions] = useState<any[]>([]);
+    const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha'>('orgs');
+    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha' | 'plans'>('orgs');
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Modal State
+    // Org Modal State
     const [editingOrg, setEditingOrg] = useState<any>(null);
     const [isSavingOrg, setIsSavingOrg] = useState(false);
+
+    // Plan Modal State
+    const [editingPlan, setEditingPlan] = useState<any>(null);
+    const [isSavingPlan, setIsSavingPlan] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -24,9 +29,11 @@ export const AdminPanel: React.FC = () => {
             const orgs = await accService.adminGetAllOrgs();
             const allUsers = await accService.adminGetAllUsers();
             const sessions = await accService.adminGetAllWahaSessions().catch(() => []);
+            const allPlans = await accService.adminGetAllPlans().catch(() => []);
             setOrganizations(orgs);
             setUsers(allUsers);
             setWahaSessions(sessions);
+            setPlans(allPlans);
         } catch (e) {
             console.error(e);
         } finally {
@@ -60,7 +67,8 @@ export const AdminPanel: React.FC = () => {
                 plan: editingOrg.plan,
                 status: editingOrg.status,
                 n8nWebhookUrl: editingOrg.n8nWebhookUrl,
-                amiHost: editingOrg.amiHost
+                amiHost: editingOrg.amiHost,
+                subscriptionPlanId: editingOrg.subscriptionPlanId
             });
             // alert('Empresa actualizada correctamente');
             setEditingOrg(null);
@@ -69,6 +77,35 @@ export const AdminPanel: React.FC = () => {
             alert('Error al actualizar empresa');
         } finally {
             setIsSavingOrg(false);
+        }
+    };
+
+    const handleSavePlan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingPlan) return;
+        setIsSavingPlan(true);
+        try {
+            if (editingPlan.id) {
+                await accService.adminUpdatePlan(editingPlan.id, editingPlan);
+            } else {
+                await accService.adminCreatePlan(editingPlan);
+            }
+            setEditingPlan(null);
+            loadData();
+        } catch (e) {
+            alert('Error al guardar el plan');
+        } finally {
+            setIsSavingPlan(false);
+        }
+    };
+
+    const handleDeletePlan = async (id: string) => {
+        if (!confirm('¿Seguro que deseas eliminar este plan? No debe haber ninguna empresa usándolo.')) return;
+        try {
+            await accService.adminDeletePlan(id);
+            loadData();
+        } catch (e: any) {
+            alert(e.message || 'Error al eliminar el plan');
         }
     };
 
@@ -129,7 +166,7 @@ export const AdminPanel: React.FC = () => {
                 <StatCard icon={<Building2 className="text-blue-500" />} label="Empresas (Tenants)" value={organizations.length} color="blue" />
                 <StatCard icon={<Users className="text-emerald-500" />} label="Usuarios Totales" value={users.length} color="emerald" />
                 <StatCard icon={<Zap className="text-yellow-500" />} label="Créditos Circulantes" value={users.reduce((acc, u) => acc + (u.credits || 0), 0)} color="yellow" />
-                <StatCard icon={<TrendingUp className="text-purple-500" />} label="Planes Activos" value={organizations.filter(o => o.status === 'ACTIVE').length} color="purple" />
+                <StatCard icon={<Smartphone className="text-purple-500" />} label="Motores WAHA" value={wahaSessions.length} color="purple" />
             </div>
 
             {/* TABS CONTROLLER */}
@@ -138,6 +175,7 @@ export const AdminPanel: React.FC = () => {
                     <TabButton active={activeTab === 'orgs'} onClick={() => setActiveTab('orgs')} label="Empresas (Tenants)" icon={<Building2 size={16} />} color="blue" />
                     <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuarios & Créditos" icon={<Users size={16} />} color="emerald" />
                     <TabButton active={activeTab === 'waha'} onClick={() => setActiveTab('waha')} label="Motor WAHA" icon={<Smartphone size={16} />} color="orange" />
+                    <TabButton active={activeTab === 'plans'} onClick={() => setActiveTab('plans')} label="Planes & Precios" icon={<CreditCard size={16} />} color="purple" />
                     <TabButton active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} label="Insights Globales" icon={<TrendingUp size={16} />} color="purple" />
                 </div>
 
@@ -318,6 +356,69 @@ export const AdminPanel: React.FC = () => {
                         </div>
                     )}
 
+                    {activeTab === 'plans' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">Diseñador de Planes Dinámicos</h3>
+                                <button 
+                                    onClick={() => setEditingPlan({ name: '', price: 0, limits: { maxUsers: 5, maxMessages: 1000 }, isActive: true })}
+                                    className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-slate-800 active:scale-95 transition-all shadow-xl shadow-slate-900/10"
+                                >
+                                    <Zap size={16} /> Crear Plan Nuevo
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {plans.map(plan => (
+                                    <div key={plan.id} className="bg-slate-50 border border-slate-200 rounded-[2.5rem] p-8 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                                        <div className="absolute top-0 right-0 p-4">
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${plan.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {plan.isActive ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-2xl font-black text-slate-900 mb-2 truncate pr-16">{plan.name}</h4>
+                                        <div className="flex items-baseline gap-1 mb-6">
+                                            <span className="text-4xl font-black text-purple-600">${plan.price}</span>
+                                            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">/ mes</span>
+                                        </div>
+                                        
+                                        <div className="space-y-3 mb-8">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-500 font-medium italic">Máx Usuarios:</span>
+                                                <span className="font-bold text-slate-700">{plan.limits?.maxUsers || '∞'}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-500 font-medium italic">Msg WAHA:</span>
+                                                <span className="font-bold text-slate-700">{plan.limits?.maxMessages || '∞'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 relative z-10 pt-4 border-t border-slate-200 border-dashed">
+                                            <button 
+                                                onClick={() => setEditingPlan(plan)}
+                                                className="flex-1 bg-white border border-slate-200 p-3 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Settings size={14} /> Editar
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeletePlan(plan.id)}
+                                                className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm shadow-red-500/5 group/del"
+                                            >
+                                                <XCircle size={18} className="transition-transform group-hover/del:scale-110" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {plans.length === 0 && (
+                                    <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                                        <CreditCard size={48} className="mx-auto text-slate-200 mb-4" />
+                                        <p className="text-slate-400 font-bold">Aún no has diseñado ningún plan dinámico.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'metrics' && (
                         <div className="space-y-6">
                             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
@@ -370,13 +471,20 @@ export const AdminPanel: React.FC = () => {
                                     <div>
                                         <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-widest">Plan</label>
                                         <select 
-                                            value={editingOrg.plan || 'FREE'}
-                                            onChange={(e) => setEditingOrg({...editingOrg, plan: e.target.value})}
+                                            value={editingOrg.subscriptionPlanId || editingOrg.plan || 'FREE'}
+                                            onChange={(e) => setEditingOrg({...editingOrg, subscriptionPlanId: e.target.value})}
                                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
                                         >
-                                            <option value="FREE">Free</option>
-                                            <option value="PRO">Pro</option>
-                                            <option value="ENTERPRISE">Enterprise</option>
+                                            <optgroup label="Planes Dinámicos">
+                                                {plans.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name} (${p.price})</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="Legacy (ENUM)">
+                                                <option value="FREE">Free (Legacy)</option>
+                                                <option value="PRO">Pro (Legacy)</option>
+                                                <option value="ENTERPRISE">Enterprise (Legacy)</option>
+                                            </optgroup>
                                         </select>
                                     </div>
                                     <div>
@@ -431,6 +539,94 @@ export const AdminPanel: React.FC = () => {
                             <button type="submit" form="editOrgForm" disabled={isSavingOrg} className="flex-1 px-4 py-3 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2 rounded-xl shadow-lg shadow-slate-900/20 transition-all active:scale-95">
                                 {isSavingOrg ? <CheckCircle className="animate-pulse" size={16} /> : <Settings size={16} />}
                                 Guardar Configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PLAN BUILDER MODAL */}
+            {editingPlan && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-slate-100 bg-purple-50 flex justify-between items-center relative">
+                            <div>
+                                <h3 className="font-black text-2xl text-slate-800 tracking-tight">Diseñar Plan</h3>
+                                <p className="text-xs font-bold text-purple-600 uppercase tracking-widest mt-1">Configuración Comercial</p>
+                            </div>
+                            <button onClick={() => setEditingPlan(null)} className="text-purple-400 hover:text-purple-600 bg-purple-200/50 hover:bg-purple-200 p-2 rounded-full transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto">
+                            <form id="editPlanForm" onSubmit={handleSavePlan} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-[0.2em]">Nombre del Paquete</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Ej: Plan Pro Max"
+                                        required
+                                        value={editingPlan.name || ''}
+                                        onChange={(e) => setEditingPlan({...editingPlan, name: e.target.value})}
+                                        className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 font-bold outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-[0.2em]">Precio Mensual ($)</label>
+                                        <input 
+                                            type="number"
+                                            placeholder="49"
+                                            value={editingPlan.price || 0}
+                                            onChange={(e) => setEditingPlan({...editingPlan, price: parseFloat(e.target.value) || 0})}
+                                            className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 font-black outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all font-mono"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-[0.2em]">Estado Vital</label>
+                                        <select 
+                                            value={editingPlan.isActive ? 'Y' : 'N'}
+                                            onChange={(e) => setEditingPlan({...editingPlan, isActive: e.target.value === 'Y'})}
+                                            className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-800 font-black outline-none focus:border-purple-500 transition-all shadow-sm"
+                                        >
+                                            <option value="Y">Publicado</option>
+                                            <option value="N">Borrador</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="pt-4 border-t border-dashed border-slate-200">
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Límites Técnicos (Quota)</h4>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <label className="block text-[9px] font-black text-slate-500 mb-1">Max Usuarios</label>
+                                                <input 
+                                                    type="number"
+                                                    value={editingPlan.limits?.maxUsers || 5}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxUsers: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 font-bold text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-[9px] font-black text-slate-500 mb-1">Max Msg WAHA</label>
+                                                <input 
+                                                    type="number"
+                                                    value={editingPlan.limits?.maxMessages || 1000}
+                                                    onChange={(e) => setEditingPlan({...editingPlan, limits: { ...editingPlan.limits, maxMessages: parseInt(e.target.value) || 0 }})}
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 font-bold text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+                            <button onClick={() => setEditingPlan(null)} className="flex-1 px-4 py-4 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-2xl transition-all">
+                                Descartar
+                            </button>
+                            <button type="submit" form="editPlanForm" disabled={isSavingPlan} className="flex-[2] bg-purple-600 text-white px-4 py-4 rounded-2xl font-black text-sm shadow-xl shadow-purple-600/20 hover:bg-purple-700 active:scale-95 transition-all">
+                                {isSavingPlan ? 'Procesando...' : (editingPlan.id ? 'Actualizar Plan' : 'Crear Plan Maestro')}
                             </button>
                         </div>
                     </div>

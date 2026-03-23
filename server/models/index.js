@@ -17,8 +17,12 @@ import { Product } from './Product.js';
 import { Order } from './Order.js';
 import { OrderItem } from './OrderItem.js';
 import { CrmTask } from './CrmTask.js';
+import { SubscriptionPlan } from './SubscriptionPlan.js';
 
 // Relations
+Organization.belongsTo(SubscriptionPlan, { foreignKey: 'subscriptionPlanId', as: 'subscriptionPlan' });
+SubscriptionPlan.hasMany(Organization, { foreignKey: 'subscriptionPlanId', as: 'organizations' });
+
 Organization.hasMany(User, { foreignKey: 'organizationId', as: 'users' });
 User.belongsTo(Organization, { foreignKey: 'organizationId', as: 'organization' });
 
@@ -120,5 +124,6 @@ export {
     Product,
     Order,
     OrderItem,
-    CrmTask
+    CrmTask,
+    SubscriptionPlan
 };

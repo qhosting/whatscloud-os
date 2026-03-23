@@ -478,5 +478,64 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to update organization');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  adminGetAllPlans: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/plans', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch plans');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminCreatePlan: async (data: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/plans', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${tokenAuth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to create plan');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminUpdatePlan: async (id: string, data: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/admin/plans/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${tokenAuth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update plan');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminDeletePlan: async (id: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/admin/plans/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to delete plan');
+        }
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };
