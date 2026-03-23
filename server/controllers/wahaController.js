@@ -151,3 +151,18 @@ export const deleteWahaSessionAdmin = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+export const checkWahaHealth = async () => {
+    const url = getWahaUrl();
+    try {
+        const response = await axios.get(`${url}/api/version`, {
+            headers: getWahaHeaders(),
+            timeout: 5000
+        });
+        logger.info(`[WAHA] Service is UP at ${url} (Version: ${response.data.version || 'unknown'})`);
+        return true;
+    } catch (e) {
+        logger.error(`[WAHA] Service is DOWN or Unreachable at ${url}. Error: ${e.message}`);
+        return false;
+    }
+};
