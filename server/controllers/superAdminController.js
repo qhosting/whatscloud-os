@@ -1,6 +1,37 @@
-import { Organization, User, CreditTransaction } from '../models/index.js';
+import { Organization, User, CreditTransaction, GlobalSetting } from '../models/index.js';
 import { sequelize } from '../config/database.js';
 import logger from '../config/logger.js';
+
+// GET ALL ORGANIZATIONS (TENANTS)
+// ... (previous functions)
+
+// GLOBAL SETTINGS
+export const getGlobalSettings = async (req, res) => {
+    try {
+        const settings = await GlobalSetting.findAll();
+        res.json(settings);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const updateGlobalSetting = async (req, res) => {
+    const { key, value } = req.body;
+    try {
+        const [setting, created] = await GlobalSetting.findOrCreate({
+            where: { key },
+            defaults: { key, value }
+        });
+
+        if (!created) {
+            await setting.update({ value });
+        }
+
+        res.json({ message: 'Setting updated', key, value });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
 
 // GET ALL ORGANIZATIONS (TENANTS)
 export const getAllOrganizations = async (req, res) => {
@@ -86,3 +117,4 @@ export const adjustUserCredits = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+

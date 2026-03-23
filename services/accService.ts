@@ -537,5 +537,32 @@ export const accService = {
         }
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  adminGetSettings: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/settings', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch settings');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  adminUpdateSetting: async (key: string, value: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/admin/settings', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${tokenAuth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ key, value })
+        });
+        if (!response.ok) throw new Error('Failed to update setting');
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { accService } from '../services/accService';
-import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone, Activity } from 'lucide-react';
+import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone, Activity, Globe, Loader2 } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
@@ -8,7 +8,7 @@ export const AdminPanel: React.FC = () => {
     const [wahaSessions, setWahaSessions] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha' | 'plans'>('orgs');
+    const [activeTab, setActiveTab] = useState<'orgs' | 'users' | 'metrics' | 'waha' | 'plans' | 'settings'>('orgs');
     const [searchTerm, setSearchTerm] = useState('');
     
     // Org Modal State
@@ -18,6 +18,8 @@ export const AdminPanel: React.FC = () => {
     // Plan Modal State
     const [editingPlan, setEditingPlan] = useState<any>(null);
     const [isSavingPlan, setIsSavingPlan] = useState(false);
+    const [globalSettings, setGlobalSettings] = useState<any[]>([]);
+    const [isUpdatingSetting, setIsUpdatingSetting] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -30,10 +32,12 @@ export const AdminPanel: React.FC = () => {
             const allUsers = await accService.adminGetAllUsers();
             const sessions = await accService.adminGetAllWahaSessions().catch(() => []);
             const allPlans = await accService.adminGetAllPlans().catch(() => []);
+            const settings = await accService.adminGetSettings().catch(() => []);
             setOrganizations(orgs);
             setUsers(allUsers);
             setWahaSessions(sessions);
             setPlans(allPlans);
+            setGlobalSettings(settings);
         } catch (e) {
             console.error(e);
         } finally {
@@ -111,6 +115,18 @@ export const AdminPanel: React.FC = () => {
         }
     };
 
+    const handleUpdateSetting = async (key: string, value: string) => {
+        setIsUpdatingSetting(key);
+        try {
+            await accService.adminUpdateSetting(key, value);
+            await loadData();
+        } catch (e) {
+            alert('Error al actualizar configuración');
+        } finally {
+            setIsUpdatingSetting(null);
+        }
+    };
+
     const filteredOrgs = organizations.filter(o => 
         o.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         o.slug?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -179,6 +195,7 @@ export const AdminPanel: React.FC = () => {
                     <TabButton active={activeTab === 'waha'} onClick={() => setActiveTab('waha')} label="Motor WAHA" icon={<Smartphone size={16} />} color="orange" />
                     <TabButton active={activeTab === 'plans'} onClick={() => setActiveTab('plans')} label="Planes & Precios" icon={<CreditCard size={16} />} color="purple" />
                     <TabButton active={activeTab === 'metrics'} onClick={() => setActiveTab('metrics')} label="Insights Globales" icon={<TrendingUp size={16} />} color="purple" />
+                    <TabButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Config del Sitio" icon={<Settings size={16} />} color="slate" />
                 </div>
 
                 <div className="p-6">
@@ -422,6 +439,67 @@ export const AdminPanel: React.FC = () => {
                                         <p className="text-slate-400 font-bold">Aún no has diseñado ningún plan dinámico.</p>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                    <Globe className="text-slate-400" size={24} /> Configuración Global del Sitio
+                                </h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Smartphone size={18} className="text-wc-green" />
+                                        <h4 className="font-bold text-slate-800">WhatsApp de Soporte</h4>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mb-4 italic">El número que aparecerá en el botón flotante de la landing page (formato internacional sin +).</p>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text"
+                                            placeholder="Ej: 5219991234567"
+                                            defaultValue={globalSettings.find(s => s.key === 'support_whatsapp')?.value || ''}
+                                            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 font-mono text-sm outline-none focus:border-wc-green"
+                                            onBlur={(e) => handleUpdateSetting('support_whatsapp', e.target.value)}
+                                        />
+                                        <button className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">
+                                            {isUpdatingSetting === 'support_whatsapp' ? <Loader2 size={14} className="animate-spin" /> : 'Guardar'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 opacity-50 cursor-not-allowed">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Globe size={18} className="text-wc-blue" />
+                                        <h4 className="font-bold text-slate-800">Nombre del Sitio (SEO)</h4>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mb-4 italic">WhatsCloud (Global Configuration locked).</p>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            disabled
+                                            type="text"
+                                            value="WhatsCloud"
+                                            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 font-bold text-sm bg-slate-100"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex items-start gap-4">
+                                <div className="bg-amber-500 text-white p-2 rounded-xl">
+                                    <Shield size={20} />
+                                </div>
+                                <div>
+                                    <h5 className="font-bold text-amber-900 mb-1 tracking-tight">Zona de Control Supremo</h5>
+                                    <p className="text-xs text-amber-700 leading-relaxed font-medium">
+                                        Cualquier cambio realizado en esta sección afecta directamente a la visualización global y el comportamiento de la plataforma para nuevos prospectos. 
+                                        Asegúrate de verificar los números de contacto antes de guardar.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}

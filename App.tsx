@@ -238,15 +238,11 @@ const App: React.FC = () => {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-6 border-b border-white/5 bg-slate-950/20">
-           <div className="flex items-center gap-2 mb-2">
-               <Hexagon size={16} className="text-yellow-500" fill="currentColor" />
-               <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Aurum Control Center</span>
-           </div>
            <div className="flex items-center gap-2">
              <div className="bg-wc-gradient p-1.5 rounded-lg shadow-inner">
                   <Cloud size={20} className="text-white" />
               </div>
-             <span className="font-bold text-xl tracking-tight">WhatsCloud<span className="text-wc-blue">.MX</span></span>
+             <span className="font-bold text-xl tracking-tight">WhatsCloud</span>
            </div>
         </div>
         
@@ -344,7 +340,7 @@ const App: React.FC = () => {
                     <span className="text-xs font-bold text-slate-700">{profile.credits > 9999 ? 'UNLIMITED' : `${profile.credits} CR`}</span>
                 </button>
                 <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                    <Server size={12} className="text-wc-green" /> CLUSTER: WHATSCLOUD-MX-PROD
+                    <Server size={12} className="text-wc-green" /> CLUSTER: WHATSCLOUD-PROD
                 </div>
               </div>
           </header>

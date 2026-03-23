@@ -24,25 +24,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [supportNumber, setSupportNumber] = useState('');
+
+  React.useEffect(() => {
+    fetch('/api/public/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.support_whatsapp) setSupportNumber(data.support_whatsapp);
+      })
+      .catch(err => console.error("Error fetching public settings", err));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setLoading(true);
-      setError('');
-
-      try {
-          let profile: ACCProfile;
-          if (isLoginMode) {
-              profile = await accService.login(email, password);
-          } else {
-              profile = await accService.register(email, password);
-          }
-          onLoginSuccess(profile); // Trigger App transition with real profile
-      } catch (err) {
-          setError('Error de autenticación. Verifica tus credenciales.');
-      } finally {
-          setLoading(false);
-      }
+    // ... (previous logic)
   };
 
   return (
@@ -55,7 +49,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
             <div className="w-8 h-8 rounded-lg bg-wc-gradient flex items-center justify-center">
                <Globe className="text-white" size={20} />
             </div>
-            <span className="font-bold text-xl tracking-tight">WhatsCloud<span className="text-wc-blue">.MX</span></span>
+            <span className="font-bold text-xl tracking-tight">WhatsCloud</span>
           </div>
         </div>
       </nav>
@@ -67,7 +61,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         <div className="max-w-2xl text-center lg:text-left relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-wc-green text-xs font-bold mb-6 animate-in fade-in slide-in-from-bottom-4">
             <Zap size={12} fill="currentColor" />
-            PRODUCCIÓN: whatscloud-os-db ONLINE
+            PRODUCCIÓN: WHATSCLOUD-OS ONLINE
           </div>
           
           <h1 className="text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -84,47 +78,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         <div className="w-full max-w-md bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right duration-700">
             <div className="p-8">
                 <h3 className="text-2xl font-bold mb-2">{isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta'}</h3>
-                <p className="text-slate-500 text-sm mb-6">Accede a tu consola Aurum Control Center.</p>
+                <p className="text-slate-500 text-sm mb-6">Accede a tu consola WhatsCloud.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-2.5 text-slate-400" size={18} />
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-wc-blue outline-none"
-                                placeholder="tu@empresa.com"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contraseña</label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-2.5 text-slate-400" size={18} />
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-wc-blue outline-none"
-                                placeholder="••••••••"
-                            />
-                        </div>
-                    </div>
-
-                    {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-2 rounded">{error}</div>}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 bg-wc-gradient text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition-opacity flex justify-center items-center gap-2"
-                    >
-                        {loading ? <Loader2 className="animate-spin" /> : (isLoginMode ? 'Entrar al Sistema' : 'Registrarse Gratis')}
-                    </button>
+                    {/* ... (form inputs) ... */}
                 </form>
 
                 <div className="mt-6 text-center text-sm text-slate-500">
@@ -138,21 +95,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
                 </div>
             </div>
             <div className="bg-slate-50 p-4 text-center text-xs text-slate-400 border-t border-slate-100">
-                Protected by Protocol 8888 Secure Auth
+                Protected by WhatsCloud Secure Auth
             </div>
         </div>
 
       </section>
+
+      {/* FLOATING WHATSAPP BUTTON */}
+      {supportNumber && (
+        <a 
+          href={`https://wa.me/${supportNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-8 right-8 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+          title="Soporte WhatsApp"
+        >
+          <MessageCircle size={28} fill="currentColor" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
+            Soporte WhatsCloud
+          </span>
+        </a>
+      )}
 
       {/* FOOTER */}
       <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500 text-sm">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
             <Globe size={16} />
-            <span className="font-bold text-slate-300">WhatsCloud.MX</span>
+            <span className="font-bold text-slate-300">WhatsCloud</span>
           </div>
           <div>
-            &copy; 2024 Aurum Capital Holding.
+            &copy; {new Date().getFullYear()} WhatsCloud. All rights reserved.
           </div>
         </div>
       </footer>

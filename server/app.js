@@ -39,7 +39,7 @@ import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
 import { verifySuperAdmin } from './middleware/adminMiddleware.js';
-import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits } from './controllers/superAdminController.js';
+import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits, getGlobalSettings, updateGlobalSetting } from './controllers/superAdminController.js';
 import { getDashboardMetrics, getMyAgenda, createTask, updateTask } from './controllers/crmController.js';
 import { 
     startWahaSession, getWahaSessionStatus, getWahaQr, stopWahaSession, 
@@ -264,6 +264,23 @@ app.get('/api/health', async (req, res) => {
   res.json(status);
 });
 
+// PUBLIC SETTINGS (For Landing Page)
+app.get('/api/public/settings', async (req, res) => {
+    try {
+        const { GlobalSetting } = await import('./models/index.js');
+        const settings = await GlobalSetting.findAll({
+            where: {
+                key: ['support_whatsapp', 'site_name', 'site_description']
+            }
+        });
+        const config = {};
+        settings.forEach(s => config[s.key] = s.value);
+        res.json(config);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 /**
  * @openapi
  * /api/scrape:
@@ -379,6 +396,8 @@ app.get('/api/admin/organizations', verifyToken, verifySuperAdmin, getAllOrganiz
 app.put('/api/admin/organizations/:id', verifyToken, verifySuperAdmin, updateOrganization);
 app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
 app.post('/api/admin/credits/adjust', verifyToken, verifySuperAdmin, adjustUserCredits);
+app.get('/api/admin/settings', verifyToken, verifySuperAdmin, getGlobalSettings);
+app.post('/api/admin/settings', verifyToken, verifySuperAdmin, updateGlobalSetting);
 
 // Custom Plans Management (God Mode)
 app.get('/api/admin/plans', verifyToken, verifySuperAdmin, getAllPlans);
