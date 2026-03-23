@@ -1,4 +1,4 @@
-import { CrmTask, Lead, User } from '../models/index.js';
+import { CrmTask, Lead, User, Organization } from '../models/index.js';
 import { Op } from 'sequelize';
 import logger from '../config/logger.js';
 import { sequelize } from '../config/database.js';
@@ -99,5 +99,32 @@ export const updateTask = async (req, res) => {
     } catch (error) {
         logger.error(`[CRM] Update Task Error: ${error.message}`);
         res.status(500).json({ error: 'Failed to update task' });
+    }
+};
+
+export const getBusinessProfile = async (req, res) => {
+    try {
+        const { organizationId } = req.user;
+        const org = await Organization.findByPk(organizationId, {
+            attributes: ['id', 'name', 'businessNiche', 'businessDescription', 'businessLocation']
+        });
+        res.json(org);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const updateBusinessProfile = async (req, res) => {
+    try {
+        const { organizationId } = req.user;
+        const { businessNiche, businessDescription, businessLocation } = req.body;
+        
+        const org = await Organization.findByPk(organizationId);
+        if (!org) return res.status(404).json({ error: 'Organization not found' });
+
+        await org.update({ businessNiche, businessDescription, businessLocation });
+        res.json(org);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 };

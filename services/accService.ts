@@ -591,5 +591,32 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to update setting');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  getBusinessProfile: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/crm/business-profile', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch business profile');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  updateBusinessProfile: async (data: any) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/crm/business-profile', {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${tokenAuth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update business profile');
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

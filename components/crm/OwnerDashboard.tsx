@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle, Plus, Search, Trash2, ExternalLink, Filter } from 'lucide-react';
+import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle, Plus, Search, Trash2, ExternalLink, Filter, Bot } from 'lucide-react';
 import { accService } from '../../services/accService';
 import { NewLeadModal } from './NewLeadModal';
 
-export const OwnerDashboard = () => {
+export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onProfileUpdate }) => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -12,6 +12,14 @@ export const OwnerDashboard = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Business Profile State
+    const [businessProfile, setBusinessProfile] = useState({
+        businessNiche: '',
+        businessDescription: '',
+        businessLocation: ''
+    });
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
 
     const handleDeleteLead = async (id: string) => {
         if (!window.confirm('¿Seguro que deseas eliminar este lead?')) return;
@@ -37,11 +45,33 @@ export const OwnerDashboard = () => {
             setStats(metrics);
             setLeads(leadsData.leads);
             setTotalPages(leadsData.pages);
+            
+            // Load Business Profile
+            const profileData = await accService.getBusinessProfile();
+            if (profileData) setBusinessProfile({
+                businessNiche: profileData.businessNiche || '',
+                businessDescription: profileData.businessDescription || '',
+                businessLocation: profileData.businessLocation || ''
+            });
+
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Error de conexión con el servidor");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        setIsSavingProfile(true);
+        try {
+            await accService.updateBusinessProfile(businessProfile);
+            if (onProfileUpdate) onProfileUpdate();
+            alert('Perfil de Negocio actualizado correctamente.');
+        } catch (e: any) {
+            alert('Error al guardar perfil: ' + e.message);
+        } finally {
+            setIsSavingProfile(false);
         }
     };
 
@@ -131,18 +161,76 @@ export const OwnerDashboard = () => {
                 </div>
             </div>
 
-            {/* PIPELINE FUNNEL */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative">
-                <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-                    <PieChart className="text-wc-purple" size={20} /> Pipeline Funnel Actual
-                </h3>
-                
-                <div className="flex flex-col gap-3">
-                    <FunnelStage label="Total Nuevos" count={funnel.NEW || 0} color="bg-blue-100 text-blue-800 border-blue-200" max={totalLeads} />
-                    <FunnelStage label="Contactados" count={funnel.CONTACTED || 0} color="bg-yellow-100 text-yellow-800 border-yellow-200" max={totalLeads} />
-                    <FunnelStage label="Cotizados / Negociación" count={funnel.QUOTED || 0} color="bg-purple-100 text-purple-800 border-purple-200" max={totalLeads} />
-                    <FunnelStage label="Citas / Visitas Realizadas" count={funnel.VISITED || 0} color="bg-indigo-100 text-indigo-800 border-indigo-200" max={totalLeads} />
-                    <FunnelStage label="Ganados" count={funnel.WON || 0} color="bg-emerald-100 text-emerald-800 border-emerald-200" max={totalLeads} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                 {/* PIPELINE FUNNEL */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                        <PieChart className="text-wc-purple" size={20} /> Pipeline Funnel Actual
+                    </h3>
+                    
+                    <div className="flex flex-col gap-3 flex-1 justify-center">
+                        <FunnelStage label="Total Nuevos" count={funnel.NEW || 0} color="bg-blue-100 text-blue-800 border-blue-200" max={totalLeads} />
+                        <FunnelStage label="Contactados" count={funnel.CONTACTED || 0} color="bg-yellow-100 text-yellow-800 border-yellow-200" max={totalLeads} />
+                        <FunnelStage label="Cotizados" count={funnel.QUOTED || 0} color="bg-purple-100 text-purple-800 border-purple-200" max={totalLeads} />
+                        <FunnelStage label="Citas/Visitas" count={funnel.VISITED || 0} color="bg-indigo-100 text-indigo-800 border-indigo-200" max={totalLeads} />
+                        <FunnelStage label="Ganados" count={funnel.WON || 0} color="bg-emerald-100 text-emerald-800 border-emerald-200" max={totalLeads} />
+                    </div>
+                </div>
+
+                {/* BUSINESS PROFILE (IA STRATEGY) */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group">
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-wc-blue/5 rounded-full blur-2xl group-hover:bg-wc-blue/10 transition-all"></div>
+                    
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <Bot className="text-wc-blue" size={20} /> Perfil Estratégico AI
+                        </h3>
+                        <button 
+                            onClick={handleSaveProfile}
+                            disabled={isSavingProfile}
+                            className="text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-black transition-all disabled:opacity-50"
+                        >
+                            {isSavingProfile ? 'Guardando...' : 'Guardar Perfil'}
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">¿De qué trata tu negocio? (Nicho)</label>
+                            <input 
+                                type="text"
+                                placeholder="Ej: Mueblería de Lujo, Clínica Dental..."
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-bold"
+                                value={businessProfile.businessNiche}
+                                onChange={(e) => setBusinessProfile({...businessProfile, businessNiche: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Descripción / Objetivo de Venta</label>
+                            <textarea 
+                                placeholder="Ej: Vendemos sofás minimalistas de alta gama para hogares premium..."
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-medium h-20 resize-none"
+                                value={businessProfile.businessDescription}
+                                onChange={(e) => setBusinessProfile({...businessProfile, businessDescription: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Ubicación Objetivo (Ciudad Base)</label>
+                            <div className="relative">
+                                <Landmark size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input 
+                                    type="text"
+                                    placeholder="Ej: CDMX, Monterrey, Querétaro..."
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-bold"
+                                    value={businessProfile.businessLocation}
+                                    onChange={(e) => setBusinessProfile({...businessProfile, businessLocation: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic">
+                            * Esta información es utilizada por WhatsCloud AI para sugerirte nichos de búsqueda y mejores prospectos en el Lead Scrapper.
+                        </p>
+                    </div>
                 </div>
             </div>
 

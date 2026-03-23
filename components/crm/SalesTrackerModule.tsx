@@ -3,7 +3,11 @@ import { OwnerDashboard } from './OwnerDashboard';
 import { MobileAgenda } from './MobileAgenda';
 import { accService } from '../../services/accService';
 
-export const SalesTrackerModule = () => {
+interface SalesTrackerProps {
+    onProfileUpdate?: () => void;
+}
+
+export const SalesTrackerModule: React.FC<SalesTrackerProps> = ({ onProfileUpdate }) => {
     const [role, setRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +36,7 @@ export const SalesTrackerModule = () => {
     }
 
     if (role === 'ACCOUNT_OWNER' || role === 'SUPER_ADMIN') {
-        return <OwnerDashboard />; // Admin view with KPI funnel
+        return <OwnerDashboard onProfileUpdate={onProfileUpdate} />; // Admin view with KPI funnel
     }
 
     // Default to Sales worker view

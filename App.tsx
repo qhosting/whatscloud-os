@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [scanProgress, setScanProgress] = useState(0);
   const [infraStatus] = useState({ redis: 'online', db: 'online' });
   const [stats, setStats] = useState<any>(null);
+  const [businessProfile, setBusinessProfile] = useState<any>(null);
   const [activeProtocol, setActiveProtocol] = useState<SystemProtocol | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -69,6 +70,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (profile) {
       accService.getDashboardStats().then(setStats);
+      accService.getBusinessProfile().then(setBusinessProfile);
       fetchLeads();
     }
   }, [profile]);
@@ -106,6 +108,16 @@ const App: React.FC = () => {
         }
     } catch (e) {
         console.error("Refresh Profile Error", e);
+    }
+  };
+
+  const refreshBusinessProfile = async () => {
+    if (!profile) return;
+    try {
+        const bp = await accService.getBusinessProfile();
+        setBusinessProfile(bp);
+    } catch (e) {
+        console.error("Refresh BP Error", e);
     }
   };
 
@@ -451,7 +463,14 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    <FilterPanel filters={filters} setFilters={setFilters} onSearch={handleSearch} isLoading={isScraping} isCompact={leads.length > 0 && !isScraping} />
+                    <FilterPanel 
+                        filters={filters} 
+                        setFilters={setFilters} 
+                        onSearch={handleSearch} 
+                        isLoading={isScraping} 
+                        isCompact={leads.length > 0 && !isScraping} 
+                        businessProfile={businessProfile}
+                    />
                     
                     {isScraping && (
                         <div className="mt-8 p-8 bg-white rounded-3xl border border-slate-200 shadow-2xl flex flex-col items-center gap-6 animate-pulse">
@@ -530,7 +549,7 @@ const App: React.FC = () => {
              )}
              {activeModule === 'SalesTracker' && (
                  <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)]">
-                    <SalesTrackerModule />
+                    <SalesTrackerModule onProfileUpdate={refreshBusinessProfile} />
                  </div>
              )}
              {activeModule === 'Commerce' && (

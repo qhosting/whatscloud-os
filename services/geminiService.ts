@@ -187,5 +187,50 @@ export const geminiService = {
         console.error("Analysis Error:", error);
         return "Error al conectar con la IA de Estrategia.";
     }
+  },
+
+  // IA SEARCH SUGGESTIONS
+  suggestSearchQueries: async (profile: any): Promise<{ niche: string; city: string; reason: string }[]> => {
+    try {
+        const prompt = `
+            [SYSTEM: ACTIVATE STRATEGIC RADAR]
+            Target Business:
+            Niche: ${profile.businessNiche}
+            Description: ${profile.businessDescription}
+            Location: ${profile.businessLocation}
+
+            Task: Suggest 5 highly relevant search queries (niche + city) to find leads/partners in Mexico/LATAM.
+            City suggestions should be based on economic relevance for the niche.
+            
+            Return JSON array: [{ niche, city, reason }]
+        `;
+
+        const aiInstance = getAI();
+        if (!aiInstance) return [];
+
+        const response = await aiInstance.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            niche: { type: Type.STRING },
+                            city: { type: Type.STRING },
+                            reason: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        });
+
+        return JSON.parse(response.text || '[]');
+    } catch (error) {
+        console.error("AI Suggestion Error:", error);
+        return [];
+    }
   }
 };

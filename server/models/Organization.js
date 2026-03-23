@@ -109,6 +109,19 @@ export const Organization = sequelize.define('Organization', {
     amiContext: {
         type: DataTypes.STRING,
         defaultValue: 'from-internal',
+    },
+    // Business Profile for AI Suggestions
+    businessNiche: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    businessDescription: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    businessLocation: {
+        type: DataTypes.STRING,
+        allowNull: true,
     }
 }, {
     timestamps: true,
