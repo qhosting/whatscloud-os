@@ -50,14 +50,6 @@ export const Organization = sequelize.define('Organization', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    chatwootUrl: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    chatwootToken: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
     accWebhookUrl: {
         type: DataTypes.STRING,
         allowNull: true,

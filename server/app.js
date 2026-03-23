@@ -229,6 +229,12 @@ app.post('/api/call', verifyToken, validate(callSchema), initiateCall);
 app.post('/api/credits/deduct', verifyToken, validate(deductionsSchema), deductCredits);
 
 // --- CRM TRACKER ROUTES ---
+app.get('/api/leads', verifyToken, getLeads);
+app.get('/api/leads/:id', verifyToken, getLeadDetail);
+app.post('/api/leads', verifyToken, createLead);
+app.put('/api/leads/:id', verifyToken, updateLead);
+app.delete('/api/leads/:id', verifyToken, deleteLead);
+
 app.get('/api/crm/organization-metrics', verifyToken, getDashboardMetrics);
 app.get('/api/crm/my-agenda', verifyToken, getMyAgenda);
 app.post('/api/crm/tasks', verifyToken, createTask);

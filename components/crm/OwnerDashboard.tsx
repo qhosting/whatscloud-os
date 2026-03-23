@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { PieChart, Users, PhoneCall, TrendingUp, Presentation, Landmark, CheckCircle, XCircle, Plus, Search, Trash2, ExternalLink, Filter } from 'lucide-react';
 import { accService } from '../../services/accService';
 import { NewLeadModal } from './NewLeadModal';
 
@@ -8,6 +8,20 @@ export const OwnerDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [leads, setLeads] = useState<any[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const handleDeleteLead = async (id: string) => {
+        if (!window.confirm('¿Seguro que deseas eliminar este lead?')) return;
+        try {
+            await accService.deleteLead(id);
+            loadMetrics();
+        } catch (e: any) {
+            alert('Error al eliminar lead: ' + e.message);
+        }
+    };
 
     useEffect(() => {
         loadMetrics();
@@ -16,8 +30,13 @@ export const OwnerDashboard = () => {
     const loadMetrics = async () => {
         try {
             setError(null);
-            const data = await accService.getCrmMetrics();
-            setStats(data);
+            const [metrics, leadsData] = await Promise.all([
+                accService.getCrmMetrics(),
+                accService.getLeads(page, 10, searchTerm)
+            ]);
+            setStats(metrics);
+            setLeads(leadsData.leads);
+            setTotalPages(leadsData.pages);
         } catch (e: any) {
             console.error(e);
             setError(e.message || "Error de conexión con el servidor");
@@ -25,6 +44,10 @@ export const OwnerDashboard = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        loadMetrics();
+    }, [page, searchTerm]);
 
     if (loading) return <div className="flex h-full items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-4 border-wc-blue border-t-transparent"></div></div>;
     
@@ -45,6 +68,7 @@ export const OwnerDashboard = () => {
     
     // Calcula la taza de conversión Lead -> Won
     const totalLeads = Object.values(funnel).reduce((a: any, b: any) => a + b, 0) as number;
+
     const wonCount = funnel.WON || 0;
     const conversionRate = totalLeads > 0 ? ((wonCount / totalLeads) * 100).toFixed(1) : "0";
 
@@ -120,6 +144,109 @@ export const OwnerDashboard = () => {
                     <FunnelStage label="Citas / Visitas Realizadas" count={funnel.VISITED || 0} color="bg-indigo-100 text-indigo-800 border-indigo-200" max={totalLeads} />
                     <FunnelStage label="Ganados" count={funnel.WON || 0} color="bg-emerald-100 text-emerald-800 border-emerald-200" max={totalLeads} />
                 </div>
+            </div>
+
+            {/* LEADS LIST SECTION */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 overflow-hidden">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <Users size={20} className="text-wc-blue" /> Gestión de Prospectos
+                        </h3>
+                        <p className="text-xs font-semibold text-slate-400">Listado completo de leads capturados</p>
+                    </div>
+                    <div className="flex w-full md:w-auto gap-2">
+                        <div className="relative flex-1 md:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                            <input 
+                                type="text"
+                                placeholder="Buscar por nombre o nicho..."
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-wc-blue transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto -mx-6">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr className="bg-slate-50 border-y border-slate-100">
+                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-wider">Negocio / Cliente</th>
+                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-wider">Teléfono / WhatsApp</th>
+                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-wider">Nicho / Ciudad</th>
+                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-wider text-center">AI Score</th>
+                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-wider text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {leads.map(lead => (
+                                <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="font-bold text-slate-700 text-sm">{lead.businessName}</div>
+                                        <div className="text-[10px] text-slate-400 font-medium">Cap: {new Date(lead.createdAt).toLocaleDateString()}</div>
+                                    </td>
+                                    <td className="px-6 py-4 font-mono text-xs text-slate-600">{lead.phone}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-slate-600">{lead.niche}</div>
+                                        <div className="text-[10px] text-slate-400 uppercase italic">{lead.city}</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${lead.aiScore > 70 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                                            {lead.aiScore || 0}%
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => window.open(`https://wa.me/${lead.phone.replace(/\D/g,'')}`, '_blank')}
+                                                className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                                title="WhatsApp"
+                                            >
+                                                <ExternalLink size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteLead(lead.id)}
+                                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {leads.length === 0 && (
+                    <div className="py-20 text-center text-slate-400">
+                        <Users className="mx-auto mb-4 opacity-20" size={48} />
+                        <p className="text-sm font-medium">No se encontraron prospectos</p>
+                    </div>
+                )}
+
+                {/* PAGINATION */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-4 mt-6 pt-6 border-t border-slate-100">
+                        <button 
+                            disabled={page === 1}
+                            onClick={() => setPage(p => p - 1)}
+                            className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-200 transition-all"
+                        >
+                            Anterior
+                        </button>
+                        <span className="text-xs font-bold text-slate-500">Página {page} de {totalPages}</span>
+                        <button 
+                            disabled={page === totalPages}
+                            onClick={() => setPage(p => p + 1)}
+                            className="px-4 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 transition-all shadow-md active:scale-95"
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
             </div>
 
             <NewLeadModal 

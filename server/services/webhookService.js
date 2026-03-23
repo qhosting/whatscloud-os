@@ -19,26 +19,7 @@ export const exportLeadToIntegrations = async (lead, organization) => {
         );
     }
 
-    // 2. Chatwoot (Create contact)
-    if (organization.chatwootUrl && organization.chatwootToken) {
-        // Chatwoot API: POST /api/v1/accounts/{account_id}/contacts
-        // This is a simplified example, usually needs accountId
-        promises.push(
-            axios.post(`${organization.chatwootUrl}/contacts`, {
-                name: lead.name,
-                phone_number: lead.phone,
-                custom_attributes: {
-                    niche: lead.niche,
-                    city: lead.city,
-                    source: 'WhatsCloud'
-                }
-            }, {
-                headers: { 'api_access_token': organization.chatwootToken }
-            }).catch(e => logger.error(`[Chatwoot] Export failed: ${e.message}`))
-        );
-    }
-
-    // 3. ACC CRM (Generic Webhook)
+    // 2. ACC CRM (Generic Webhook)
     if (organization.accWebhookUrl) {
         // Enviar payload extendido con metadata de LeadScrapper
         promises.push(

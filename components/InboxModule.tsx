@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, User, Search, RefreshCw, Bot, Check, CheckCheck, Clock, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, User, Search, RefreshCw, Bot, Check, CheckCheck, Clock, ArrowLeft, Zap, FileText } from 'lucide-react';
 
 interface Conversation {
     id: string;
@@ -29,7 +29,15 @@ export const InboxModule: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const templates = [
+        { id: 1, title: 'Bienvenida', text: '¡Hola! Bienvenido a WhatsCloud. ¿En qué podemos ayudarte hoy?' },
+        { id: 2, title: 'Asesoría', text: 'Gracias por tu interés. En breve un asesor se pondrá en contacto contigo para darte más detalles.' },
+        { id: 3, title: 'Promoción', text: '¡Tenemos promociones exclusivas esta semana! ¿Te gustaría recibirlas?' },
+        { id: 4, title: 'Cierre', text: '¿Tienes alguna otra duda o hay algo más en lo que podamos asistirte?' }
+    ];
 
     const activeConv = conversations.find(c => c.id === activeConvId);
 
@@ -125,6 +133,11 @@ export const InboxModule: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSendTemplate = (text: string) => {
+        setInputText(text);
+        setShowTemplates(false);
     };
 
     return (
@@ -259,10 +272,36 @@ export const InboxModule: React.FC = () => {
                                         }
                                     }}
                                     placeholder="Escribe un mensaje..."
-                                    className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-0 outline-none resize-none overflow-hidden max-h-32"
+                                     className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-sm focus:ring-0 outline-none resize-none overflow-hidden max-h-32"
                                     rows={1}
                                     style={{ minHeight: '44px' }}
                                 />
+                                <div className="relative">
+                                    {showTemplates && (
+                                        <div className="absolute bottom-full right-0 mb-4 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-20 animate-in slide-in-from-bottom-2">
+                                            <div className="p-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400">Respuestas Rápidas</div>
+                                            {templates.map(t => (
+                                                <button 
+                                                    key={t.id}
+                                                    type="button"
+                                                    onClick={() => handleSendTemplate(t.text)}
+                                                    className="w-full p-3 text-left hover:bg-wc-blue/5 transition-colors border-b border-slate-50 last:border-none"
+                                                >
+                                                    <div className="font-bold text-xs text-slate-700">{t.title}</div>
+                                                    <div className="text-[10px] text-slate-400 truncate">{t.text}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowTemplates(!showTemplates)}
+                                        className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center flex-shrink-0 ${showTemplates ? 'bg-wc-purple text-white' : 'bg-white text-wc-purple'}`}
+                                        title="Respuestas Rápidas"
+                                    >
+                                        <Zap size={18} fill={showTemplates ? "currentColor" : "none"} />
+                                    </button>
+                                </div>
                                 <button 
                                     type="submit" 
                                     disabled={!inputText.trim() || isLoading}

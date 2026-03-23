@@ -1,5 +1,6 @@
-import { Category, Product, Order, OrderItem, Lead } from '../models/index.js';
+import { Category, Product, Order, OrderItem, Lead, WhatsAppConnection } from '../models/index.js';
 import logger from '../config/logger.js';
+import axios from 'axios';
 
 // --- CATEGORIES ---
 
@@ -157,6 +158,31 @@ export const updateOrderStatus = async (req, res) => {
         if (!order) return res.status(404).json({ error: 'Order not found' });
 
         await order.update({ status });
+
+        // --- WHATSAPP NOTIFICATION ---
+        try {
+            const connection = await WhatsAppConnection.findOne({
+                where: { organizationId, status: 'CONNECTED' }
+            });
+
+            if (connection && order.Lead) {
+                const wahaUrl = process.env.WAHA_URL || 'http://localhost:3000';
+                const message = `*Actualización de Pedido #${order.id.substring(0,8)}*\n\nHola ${order.Lead.businessName}, el estatus de tu pedido ha cambiado a: *${status}*.\n\n¡Gracias por tu confianza!`;
+                
+                await axios.post(`${wahaUrl}/api/sendText`, {
+                    session: connection.identifier,
+                    chatId: `${order.Lead.phone}@c.us`,
+                    text: message
+                }, {
+                    headers: { 'X-Api-Key': process.env.WAHA_API_KEY || '' }
+                });
+                
+                logger.info(`[COMMERCE] WhatsApp notification sent for order ${order.id}`);
+            }
+        } catch (waError) {
+            logger.error(`[COMMERCE] WhatsApp notification failed: ${waError.message}`);
+        }
+
         res.json(order);
     } catch (error) {
         logger.error(`[COMMERCE] Update Order Error: ${error.message}`);

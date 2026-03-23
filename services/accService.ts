@@ -37,6 +37,33 @@ export const accService = {
     }
   },
 
+  getLeads: async (page = 1, limit = 20, niche?: string, city?: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const query = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+        if (niche) query.append('niche', niche);
+        if (city) query.append('city', city);
+        
+        const response = await fetch(`/api/leads?${query.toString()}`, {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch leads');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  deleteLead: async (id: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/leads/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to delete lead');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
   updateLead: async (id: string, data: any): Promise<any> => {
     try {
       const token = localStorage.getItem('wc_auth_token');

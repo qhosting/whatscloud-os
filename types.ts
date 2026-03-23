@@ -189,17 +189,7 @@ export interface PbxExtension {
   agentName: string;
 }
 
-// --- CONNECTIONS / CHATWOOT TYPES ---
-
-export interface ChatwootChannel {
-  id: string;
-  name: string;
-  type: 'whatsapp_api' | 'web_widget';
-  identifier: string; // Phone number or Website URL
-  status: 'active' | 'disconnected' | 'pending';
-  inboxToken?: string;
-  webhookStatus: 'healthy' | 'error';
-}
+// --- CONNECTIONS TYPES ---
 
 // --- BILLING / PAYMENTS ---
 export interface Payment {

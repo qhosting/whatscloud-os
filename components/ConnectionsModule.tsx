@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChatwootChannel, UserRole } from '../types';
+import { UserRole } from '../types';
 import { 
   Radio, 
   MessageSquare, 
@@ -18,45 +18,18 @@ import {
 import { WahaConnectionCard } from './WahaConnectionCard';
 
 interface ConnectionsModuleProps {
-  onCreateChannel: (data: { name: string; phoneNumber: string }) => void;
   onLinkExtension?: (extension: string) => void;
   currentExtension?: string;
   role: UserRole;
 }
 
-export const ConnectionsModule: React.FC<ConnectionsModuleProps> = ({ onCreateChannel, onLinkExtension, currentExtension, role }) => {
+export const ConnectionsModule: React.FC<ConnectionsModuleProps> = ({ onLinkExtension, currentExtension, role }) => {
   // RBAC
   const canManage = role === 'SUPER_ADMIN' || role === 'ACCOUNT_OWNER';
-
-  // STATE: CHATWOOT
-  const [isCreating, setIsCreating] = useState(false);
-  const [channels] = useState<ChatwootChannel[]>([
-    {
-      id: 'cw_1',
-      name: 'Ventas Principal',
-      type: 'whatsapp_api',
-      identifier: '+525512345678',
-      status: 'active',
-      webhookStatus: 'healthy'
-    }
-  ]);
 
   // STATE: PBX
   const [pbxExt, setPbxExt] = useState(currentExtension || '');
   const [isSavingExt, setIsSavingExt] = useState(false);
-
-  // FORM STATE
-  const [newName, setNewName] = useState('');
-  const [newPhone, setNewPhone] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName || !newPhone) return;
-    onCreateChannel({ name: newName, phoneNumber: newPhone });
-    setIsCreating(false);
-    setNewName('');
-    setNewPhone('');
-  };
 
   const handleSaveExtension = () => {
       if(!onLinkExtension) return;
