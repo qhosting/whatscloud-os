@@ -192,7 +192,7 @@ export const accService = {
           audience: config.audience,
           cost: cost,
           scheduledAt: config.scheduledAt,
-          pbxHost: 'issabel.whatscloud.mx' // Default pbx host
+          pbxHost: 'issabel.whatscloud.io' // Default pbx host
         })
       });
       if (!response.ok) throw new Error('Failed to create campaign');

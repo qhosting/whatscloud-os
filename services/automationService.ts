@@ -3,11 +3,11 @@ import { N8NPayload, Lead, SMSCampaignConfig, VoiceCampaignConfig, BotConfig } f
 import { PROD_CONFIG } from './config';
 
 // Endpoints reales de producción para WhatsCloud Ecosistema
-const N8N_WEBHOOK_URL = 'https://n8n.whatscloud.mx/webhook/acc-orchestrator';
+const N8N_WEBHOOK_URL = 'https://n8n.whatscloud.io/webhook/acc-orchestrator';
 
 export const automationService = {
   /**
-   * Ejecuta disparadores en el orquestador N8N de WhatsCloud.MX
+   * Ejecuta disparadores en el orquestador N8N de WhatsCloud
    * Utiliza el Protocolo Grabovoi correspondiente a la acción.
    */
   trigger: async (payload: N8NPayload) => {

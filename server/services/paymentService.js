@@ -43,7 +43,7 @@ export const getOpenPayCustomer = async (organization) => {
     
     const customerRequest = {
         name: organization.name,
-        email: `billing+${organization.slug}@whatscloud.mx`, // Placeholder
+        email: `billing+${organization.slug}@whatscloud.io`, // Placeholder
         external_id: organization.id
     };
 

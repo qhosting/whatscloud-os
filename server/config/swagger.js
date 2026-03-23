@@ -9,7 +9,7 @@ const options = {
       description: 'API documentation for WhatsCloud OS Scraping and SaaS platform',
       contact: {
         name: 'Technical Support',
-        url: 'https://whatscloud.mx',
+        url: 'https://whatscloud.io',
       },
     },
     servers: [
@@ -18,7 +18,7 @@ const options = {
         description: 'Development server',
       },
       {
-        url: 'https://api.whatscloud.mx',
+        url: 'https://api.whatscloud.io',
         description: 'Production server',
       },
     ],

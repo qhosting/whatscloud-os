@@ -10,7 +10,8 @@ import {
   PhoneCall,
   Loader2,
   Lock,
-  Mail
+  Mail,
+  AlertCircle
 } from 'lucide-react';
 import { ACCProfile } from '../types';
 
@@ -36,12 +37,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    // ... (previous logic)
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      if (isLoginMode) {
+        const profile = await accService.login(email, password);
+        onLoginSuccess(profile);
+      } else {
+        const profile = await accService.register(email, password);
+        onLoginSuccess(profile);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error en la autenticación');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-wc-purple selection:text-white overflow-x-hidden">
       
+      {/* FLOATING WHATSAPP BUTTON */}
+      <a 
+        href={`https://wa.me/${supportNumber || '5219991234567'}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 z-[999] bg-[#25D366] text-white p-4 rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+        title="Soporte WhatsApp"
+      >
+        <MessageCircle size={32} />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
+          Soporte WhatsCloud
+        </span>
+      </a>
+
       {/* NAVBAR */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -81,7 +111,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
                 <p className="text-slate-500 text-sm mb-6">Accede a tu consola WhatsCloud.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* ... (form inputs) ... */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Corporativo</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-wc-blue focus:border-transparent transition-all outline-none"
+                                placeholder="tu@empresa.com"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-wc-blue focus:border-transparent transition-all outline-none"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-500 text-xs rounded-lg flex items-center gap-2">
+                           <AlertCircle size={14} /> {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-wc-gradient hover:bg-wc-gradient-hover text-white font-bold py-4 rounded-xl shadow-lg shadow-wc-blue/20 transition-all flex items-center justify-center gap-2 mt-4"
+                    >
+                        {loading ? <Loader2 className="animate-spin" size={20} /> : (
+                            <>
+                                {isLoginMode ? 'Entrar a WhatsCloud' : 'Iniciar Trial Ahora'}
+                                <ArrowRight size={18} />
+                            </>
+                        )}
+                    </button>
                 </form>
 
                 <div className="mt-6 text-center text-sm text-slate-500">
@@ -100,20 +177,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginSuccess }) => {
         </div>
 
       </section>
-
-      {/* FLOATING WHATSAPP BUTTON */}
-      <a 
-        href={`https://wa.me/${supportNumber || '5219991234567'}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-8 right-8 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
-        title="Soporte WhatsApp"
-      >
-        <MessageCircle size={28} fill="currentColor" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
-          Soporte WhatsCloud
-        </span>
-      </a>
 
       {/* FOOTER */}
       <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500 text-sm">
