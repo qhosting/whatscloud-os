@@ -77,20 +77,45 @@ export const getWahaQr = async (req, res) => {
         const sessionName = getTenantSessionName(organizationId);
         const wahaUrl = getWahaUrl();
 
-        // Get QR as JSON (which contains base64 usually, or we can request image)
+        // Solicitar el QR. Intentamos obtenerlo como buffer primero.
         const qrResponse = await axios.get(`${wahaUrl}/api/${sessionName}/auth/qr`, {
             headers: getWahaHeaders(),
-            responseType: 'arraybuffer' // force array buffer to pipe image directly
-        }).catch(e => null);
+            responseType: 'arraybuffer'
+        }).catch(e => {
+            logger.error(`[WAHA] QR Error: ${e.message}`);
+            return null;
+        });
 
         if (!qrResponse || !qrResponse.data) {
-            return res.status(404).json({ error: 'QR not ready or session is not in SCAN_QR_CODE state' });
+            return res.status(404).json({ error: 'QR not ready' });
         }
 
-        // Pipe the image
         const contentType = qrResponse.headers['content-type'];
-        res.setHeader('Content-Type', contentType || 'image/png');
-        res.send(qrResponse.data);
+        
+        // Si es una imagen (binario), la enviamos tal cual
+        if (contentType && contentType.includes('image')) {
+            res.setHeader('Content-Type', contentType);
+            return res.send(Buffer.from(qrResponse.data));
+        }
+
+        // Si es JSON (posiblemente por Easypanel/Cloudflare o versión de WAHA)
+        // Intentamos parsear por si viene en un formato como { format: "png", data: "base64..." }
+        try {
+            const dataString = Buffer.from(qrResponse.data).toString('utf8');
+            const jsonData = JSON.parse(dataString);
+            
+            if (jsonData.data && jsonData.data.includes('base64')) {
+                const base64Data = jsonData.data.split(',')[1] || jsonData.data;
+                res.setHeader('Content-Type', 'image/png');
+                return res.send(Buffer.from(base64Data, 'base64'));
+            }
+        } catch (e) {
+            // No era JSON, procedemos a enviarlo como imagen por defecto si nada falló
+        }
+
+        // Fallback: enviar lo que sea que llegó como imagen
+        res.setHeader('Content-Type', 'image/png');
+        res.send(Buffer.from(qrResponse.data));
     } catch (e) {
         logger.error(`[WAHA] qr fetch exception: ${e.message}`);
         res.status(500).json({ error: e.message });
