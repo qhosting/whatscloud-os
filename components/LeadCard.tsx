@@ -38,25 +38,40 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
 
   const handleCRMUpdate = async (e: React.MouseEvent) => {
       e.stopPropagation();
-      const newStatus = prompt("Cambiar Estado (NEW, CONTACTED, QUALIFIED, WON, LOST, EXPORTED_WC):", lead.status);
-      if (!newStatus) return;
 
-      const newNotes = prompt("Notas de seguimiento:", lead.notes || "");
-      const newPriority = prompt("Prioridad (LOW, MEDIUM, HIGH):", lead.priority) as 'LOW' | 'MEDIUM' | 'HIGH';
-      const newFollowDate = prompt("Fecha de recordatorio (AAAA-MM-DD):", lead.followUpDate?.split('T')[0] || "");
+      const newNotes = prompt(`Acerca de ${lead.businessName}:\n\nDescribe la tarea, acción o nota inicial para el CRM:`, lead.notes || "Contactar para ofrecer servicios");
+      if (!newNotes) return;
+
+      const followDateStr = prompt("Fecha programada para la tarea (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
 
       setUpdating(true);
       try {
-          await accService.updateLead(lead.id, {
-              status: newStatus.toUpperCase(),
-              notes: newNotes,
-              priority: newPriority,
-              followUpDate: newFollowDate ? new Date(newFollowDate).toISOString() : null
+          // 1. Crear Tarea en CRM
+          await accService.createCrmTask({
+              title: `Seguimiento: ${lead.businessName}`,
+              type: 'CALL',
+              description: newNotes,
+              dueDate: followDateStr ? new Date(followDateStr).toISOString() : new Date().toISOString(),
+              leadId: lead.id
           });
-          if (onUpdate) onUpdate(lead);
-          alert("Lead actualizado correctamente");
+
+          // 2. Actualizar estado del Lead para denotar que fue transferido
+          const updatedTargetStatus = 'CONTACTED';
+          await accService.updateLead(lead.id, {
+              status: updatedTargetStatus,
+              notes: newNotes,
+              followUpDate: followDateStr ? new Date(followDateStr).toISOString() : null
+          });
+          
+          if (onUpdate) {
+             lead.status = updatedTargetStatus;
+             lead.notes = newNotes;
+             onUpdate(lead);
+          }
+          
+          alert("¡Lead transferido exitosamente a CRM y Tareas!");
       } catch (err) {
-          alert("Error al actualizar lead");
+          alert("Error al transferir al CRM");
       } finally {
           setUpdating(false);
       }
@@ -105,9 +120,10 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
                     lead.status === 'WON' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
                     lead.status === 'LOST' ? 'bg-red-100 text-red-700 border-red-200' :
                     lead.status === 'NEW' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                    lead.status === 'CONTACTED' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                     'bg-slate-100 text-slate-600 border-slate-200'
                 }`}>
-                    {lead.status}
+                    {lead.status === 'CONTACTED' ? 'EN CRM' : lead.status}
                 </span>
                 {lead.priority === 'HIGH' && (
                     <span className="flex items-center gap-0.5 text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 uppercase animate-pulse">
@@ -187,14 +203,20 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
           )}
 
           <div className="flex gap-2">
-            <button 
-                onClick={handleCRMUpdate}
-                disabled={updating}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-[44px] text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
-            >
-                {updating ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
-                Seguimiento
-            </button>
+            {lead.status === 'NEW' ? (
+                <button 
+                    onClick={handleCRMUpdate}
+                    disabled={updating}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-[44px] text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-black/10"
+                >
+                    {updating ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />}
+                    Pasar a CRM
+                </button>
+            ) : (
+                <div className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-[44px] text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg">
+                    <CheckCircle size={14} /> En CRM y Tareas
+                </div>
+            )}
             {lead.mapsUrl && (
                 <a 
                     href={lead.mapsUrl} 
