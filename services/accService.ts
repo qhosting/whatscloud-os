@@ -651,5 +651,20 @@ export const accService = {
         if (!response.ok) throw new Error('Failed to update business profile');
         return await response.json();
     } catch (e) { throw e; }
+  },
+
+  sendTestPush: async () => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/notifications/test-push', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to send test push');
+        }
+        return await response.json();
+    } catch (e) { throw e; }
   }
 };

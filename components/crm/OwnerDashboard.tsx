@@ -281,8 +281,8 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                         </div>
                     </div>
 
-                    {/* Table */}
-                    <div className="overflow-x-auto">
+                    {/* Table (Desktop) */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr className="bg-slate-50/80 border-b border-slate-100">
@@ -354,6 +354,58 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                                 })}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Cards (Mobile) */}
+                    <div className="md:hidden divide-y divide-slate-100">
+                        {filteredLeads.map(lead => {
+                            const status = (lead.status || 'NEW') as LeadStatus;
+                            const isUpdating = updatingLeadId === lead.id;
+                            return (
+                                <div key={lead.id} className="p-4 flex flex-col gap-3 active:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-slate-800 text-sm leading-tight truncate">{lead.businessName || '—'}</div>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="text-[10px] text-slate-500 font-mono bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded">
+                                                    {lead.phone || '—'}
+                                                </span>
+                                                <div className="flex items-center gap-0.5">
+                                                    <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${(lead.aiScore || 0) >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {lead.aiScore || 0}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <StatusBadge status={status} />
+                                    </div>
+                                    <div className="flex items-center justify-between mt-1">
+                                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                                             {lead.city || lead.niche || 'Cliente Sin Ubicación'}
+                                         </div>
+                                         <div className="flex items-center gap-1.5">
+                                             <StatusDropdown
+                                                 current={status}
+                                                 onChange={s => handleStatusChange(lead.id, s)}
+                                                 loading={isUpdating}
+                                             />
+                                             <button
+                                                 onClick={() => window.open(`https://wa.me/${(lead.phone || '').replace(/\D/g, '')}`, '_blank')}
+                                                 className="p-2 bg-green-50 text-green-600 rounded-lg active:scale-95 transition-all"
+                                             >
+                                                 <MessageSquare size={14} />
+                                             </button>
+                                             <button
+                                                 onClick={() => handleDeleteLead(lead.id)}
+                                                 className="p-2 bg-red-50 text-red-500 rounded-lg active:scale-95 transition-all"
+                                             >
+                                                 <Trash2 size={14} />
+                                             </button>
+                                         </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {/* Empty state */}

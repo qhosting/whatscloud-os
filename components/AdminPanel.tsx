@@ -20,6 +20,7 @@ export const AdminPanel: React.FC = () => {
     const [isSavingPlan, setIsSavingPlan] = useState(false);
     const [globalSettings, setGlobalSettings] = useState<any[]>([]);
     const [isUpdatingSetting, setIsUpdatingSetting] = useState<string | null>(null);
+    const [isTestingPush, setIsTestingPush] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -135,11 +136,23 @@ export const AdminPanel: React.FC = () => {
         setIsUpdatingSetting(key);
         try {
             await accService.adminUpdateSetting(key, value);
-            await loadData();
+            setGlobalSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s));
         } catch (e) {
-            alert('Error al actualizar configuración');
+            alert('Error al actualizar setting');
         } finally {
             setIsUpdatingSetting(null);
+        }
+    };
+
+    const handleSendTestNotification = async () => {
+        setIsTestingPush(true);
+        try {
+            await accService.sendTestPush();
+            alert("Notificación de prueba enviada. Deberías recibirla en unos segundos.");
+        } catch (e: any) {
+            alert("Error al enviar notificación: " + (e.message || "Error desconocido"));
+        } finally {
+            setIsTestingPush(false);
         }
     };
 
@@ -520,6 +533,26 @@ export const AdminPanel: React.FC = () => {
                                         />
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-wc-blue/10 p-3 rounded-2xl">
+                                        <Activity size={24} className="text-wc-blue" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-slate-800 tracking-tight">Prueba de Notificaciones PWA</h4>
+                                        <p className="text-xs text-slate-500 font-medium">Verifica que el Service Worker y el sistema de avisos push estén activos en este dispositivo.</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={handleSendTestNotification}
+                                    disabled={isTestingPush}
+                                    className="w-full md:w-auto bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isTestingPush ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} className="text-yellow-400" />}
+                                    Enviar Notificación de Prueba
+                                </button>
                             </div>
 
                             <div className="mt-8 p-6 bg-amber-50 rounded-3xl border border-amber-100 flex items-start gap-4">
