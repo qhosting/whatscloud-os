@@ -14,13 +14,8 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
             if (!apiKey || apiKey === '' || apiKey === 'undefined') {
                 return "Configuración IA pendiente: Por favor activa tu API_KEY en el panel de control.";
             }
-            ai = new GoogleGenAI(apiKey);
+            ai = new GoogleGenAI({ apiKey });
         }
-
-        const model = ai.getGenerativeModel({ 
-            model: "gemini-2.0-flash",
-            systemInstruction: botConfig.systemPrompt || "Eres un Agente Neural de WhatsCloud. Tu objetivo es ayudar al usuario de forma eficiente y profesional."
-        });
 
         // 1. Get or Create Memory
         let [memory] = await AgentMemory.findOrCreate({
@@ -50,7 +45,11 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
 
         const memoryContext = `CONTEXTO DEL CONTACTO (HECHOS CONOCIDOS): ${JSON.stringify(memory.longTermFacts)}.${actionContext}`;
         
-        const chat = model.startChat({
+        const chat = ai.chats.create({
+            model: "gemini-2.5-flash",
+            config: {
+                systemInstruction: botConfig.systemPrompt || "Eres un Agente Neural de WhatsCloud. Tu objetivo es ayudar al usuario de forma eficiente y profesional."
+            },
             history: [
                 { role: "user", parts: [{ text: memoryContext }] },
                 { role: "model", parts: [{ text: "Entendido. Recordaré estos datos y códigos de acción para nuestra conversación." }] },
@@ -62,8 +61,8 @@ export const processAgentMessage = async (organizationId, contactIdentifier, use
         });
 
         // 4. Send message
-        const result = await chat.sendMessage(userMessage);
-        const responseText = result.response.text();
+        const result = await chat.sendMessage({ message: userMessage });
+        const responseText = result.text || "";
 
         // Detect if any smart action was triggered
         let triggeredAction = null;

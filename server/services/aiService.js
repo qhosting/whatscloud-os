@@ -8,7 +8,7 @@ const getAI = () => {
     const apiKey = process.env.API_KEY?.trim();
     if (apiKey && apiKey !== '' && apiKey !== 'undefined') {
         try {
-            ai = new GoogleGenAI(apiKey);
+            ai = new GoogleGenAI({ apiKey });
         } catch (error) {
             logger.error(`[AI-SERVICE] Failed to initialize Gemini: ${error.message}`);
         }
@@ -24,8 +24,6 @@ export const scoreLead = async (leadData) => {
   if (!aiInstance) return { score: null, summary: "AI not configured" };
 
   try {
-    const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
-
     const prompt = `
       Analyze this business lead and provide a quality score (1-100) and a "Sales Strategy" summary.
       
@@ -46,8 +44,11 @@ export const scoreLead = async (leadData) => {
       {"score": number, "summary": "string"}
     `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const result = await aiInstance.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt
+    });
+    const text = result.text || "";
     
     // Clean JSON response (sometimes Gemini adds ```json ... ```)
     const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -71,8 +72,6 @@ export const generateStrategy = async (leadData) => {
     if (!aiInstance) return "IA no configurada en el servidor.";
 
     try {
-        const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" });
-
         const prompt = `
             Actúa como un experto en ventas B2B para WhatsCloud (Ecosistema de Chatbots e IA).
             Genera una estrategia de entrada de 1 frase corta (máximo 15 palabras) para este negocio.
@@ -90,8 +89,11 @@ export const generateStrategy = async (leadData) => {
             Output: Solo la frase estratégica, en español, tono profesional y agresivo (orientado a cierre).
         `;
 
-        const result = await model.generateContent(prompt);
-        return result.response.text().trim() || "Oportunidad de automatización detectada.";
+        const result = await aiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt
+        });
+        return (result.text || "").trim() || "Oportunidad de automatización detectada.";
     } catch (error) {
         logger.error(`[AI-STRATEGY] Error: ${error.message}`);
         return "Error al generar estrategia neural.";
