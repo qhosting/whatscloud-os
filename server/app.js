@@ -34,7 +34,7 @@ import { deductCredits } from './controllers/creditsController.js';
 import { scraperQueue } from './queues/scraperQueue.js';
 import { getLeads, getLeadDetail, deleteLead, exportLeads, analyzeLead, updateLead, createLead } from './controllers/leadController.js';
 import { requestRecharge, uploadReceipt, approvePayment, getPayments } from './controllers/paymentController.js';
-import { handleAgentChat } from './controllers/agentController.js';
+import { handleAgentChat, suggestQueries } from './controllers/agentController.js';
 import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
@@ -185,6 +185,7 @@ app.post('/api/payments/:paymentId/approve', verifyToken, approvePayment);
 
 // --- AI AGENT ROUTES ---
 app.post('/api/agent/chat', verifyToken, handleAgentChat);
+app.post('/api/agent/suggest', verifyToken, suggestQueries);
 
 // --- CHATCENTER / INBOX ROUTES ---
 app.get('/api/inbox/conversations', verifyToken, getInboxConversations);

@@ -189,45 +189,23 @@ export const geminiService = {
     }
   },
 
-  // IA SEARCH SUGGESTIONS
+  // IA SEARCH SUGGESTIONS (Proxied to backend)
   suggestSearchQueries: async (profile: any): Promise<{ niche: string; city: string; reason: string }[]> => {
     try {
-        const prompt = `
-            [SYSTEM: ACTIVATE STRATEGIC RADAR]
-            Target Business:
-            Niche: ${profile.businessNiche}
-            Description: ${profile.businessDescription}
-            Location: ${profile.businessLocation}
-
-            Task: Suggest 5 highly relevant search queries (niche + city) to find leads/partners in Mexico/LATAM.
-            City suggestions should be based on economic relevance for the niche.
-            
-            Return JSON array: [{ niche, city, reason }]
-        `;
-
-        const aiInstance = getAI();
-        if (!aiInstance) return [];
-
-        const response = await aiInstance.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            niche: { type: Type.STRING },
-                            city: { type: Type.STRING },
-                            reason: { type: Type.STRING }
-                        }
-                    }
-                }
-            }
+        const token = localStorage.getItem('wc_auth_token');
+        const response = await fetch('/api/agent/suggest', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ profile })
         });
 
-        return JSON.parse(response.text || '[]');
+        if (!response.ok) throw new Error("Backend AI suggestion failed");
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error("AI Suggestion Error:", error);
         return [];
