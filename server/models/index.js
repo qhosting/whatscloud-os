@@ -18,6 +18,7 @@ import { Order } from './Order.js';
 import { OrderItem } from './OrderItem.js';
 import { CrmTask } from './CrmTask.js';
 import { SubscriptionPlan } from './SubscriptionPlan.js';
+import { GlobalSetting } from './GlobalSetting.js';
 
 // Relations
 Organization.belongsTo(SubscriptionPlan, { foreignKey: 'subscriptionPlanId', as: 'subscriptionPlan' });
@@ -125,5 +126,7 @@ export {
     Order,
     OrderItem,
     CrmTask,
-    SubscriptionPlan
+    SubscriptionPlan,
+    GlobalSetting
 };
+
