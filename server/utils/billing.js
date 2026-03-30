@@ -1,6 +1,6 @@
 import { Organization } from '../models/Organization.js';
 import { SubscriptionPlan } from '../models/SubscriptionPlan.js';
-import { logger } from './logger.js';
+import logger from '../config/logger.js';
 
 /**
  * Deducts technical quota from an organization.
