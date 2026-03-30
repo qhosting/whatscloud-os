@@ -130,9 +130,9 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Restrictive CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'https://whatscloud.io',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 app.use(cors(corsOptions));
 
