@@ -5,7 +5,7 @@ export const storageService = {
   // REDIS: Operaciones de alta velocidad (Caché/Queue)
   redis: {
     set: async (key: string, value: any, ttl?: number) => {
-      console.log(`[REDIS PUSH] Key: ${key} to ${PROD_CONFIG.REDIS.URI}`);
+      // console.log(`[REDIS PUSH] Key: ${key} to REDIS_INSTANCE`);
       localStorage.setItem(`redis_${key}`, JSON.stringify({
         data: value,
         expiry: ttl ? Date.now() + ttl * 1000 : null
@@ -26,7 +26,7 @@ export const storageService = {
   // POSTGRESQL 16: Persistencia robusta
   db: {
     query: async (table: string, action: 'select' | 'insert' | 'update', payload?: any) => {
-      console.log(`[POSTGRES 16] ${action.toUpperCase()} on ${PROD_CONFIG.DATABASE.NAME}.${table}`);
+      // console.log(`[POSTGRES 16] ${action.toUpperCase()} on DB`);
       // Simulación de persistencia
       if (action === 'insert' || action === 'update') {
         const existing = localStorage.getItem(`db_${table}`) || '[]';

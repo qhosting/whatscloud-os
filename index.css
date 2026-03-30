@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8fafc;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Prevent iOS auto-zoom on inputs in PWA */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
