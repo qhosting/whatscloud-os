@@ -17,6 +17,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { InsightsPanel } from './components/InsightsPanel';
 import { ViewFilters, PostProcessingToolbar } from './components/PostProcessingToolbar';
 import { LandingPage } from './components/LandingPage';
+import { LoginView } from './components/LoginView';
 import { InboxModule } from './components/InboxModule';
 import { CommerceModule } from './components/CommerceModule';
 import { SalesTrackerModule } from './components/crm/SalesTrackerModule';
@@ -30,6 +31,7 @@ type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const { subscribeUser } = usePushNotifications();
   const [activeModule, setActiveModule] = useState<ModuleType>('Dashboard');
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -241,8 +243,13 @@ const App: React.FC = () => {
     return result;
   }, [leads, viewFilters]);
 
-  // Si no hay perfil, mostrar Landing de Producción
-  if (!profile) return <LandingPage onLoginSuccess={handleLoginSuccess} />;
+  // Si no hay perfil, mostrar Auth Views
+  if (!profile) {
+      if (showLogin) {
+          return <LoginView onLoginSuccess={handleLoginSuccess} onBack={() => setShowLogin(false)} />;
+      }
+      return <LandingPage onNavigateToLogin={() => setShowLogin(true)} />;
+  }
 
   return (
     <div className="min-h-screen flex font-sans bg-slate-50 selection:bg-wc-blue selection:text-white">
@@ -331,7 +338,7 @@ const App: React.FC = () => {
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen w-full overflow-hidden">
-          <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-8 shadow-sm">
+          <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-30 border-b border-slate-200 h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-sm">
               <div className="flex items-center gap-3">
                   <button 
                     className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -360,13 +367,13 @@ const App: React.FC = () => {
               </div>
           </header>
 
-          <main className="flex-grow p-4 md:p-8 overflow-y-auto bg-[#FBFDFF] pb-24 md:pb-8">
+          <main className="flex-grow p-3 md:p-8 overflow-y-auto bg-[#FBFDFF] pb-20 md:pb-8">
              {activeModule === 'Dashboard' && (
                 <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
-                    <h1 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">Dashboard <span className="text-wc-blue">Real-Time</span></h1>
+                    <h1 className="text-3xl lg:text-4xl font-black text-slate-900 mb-4 md:mb-8 tracking-tighter">Dashboard <span className="text-wc-blue">Real-Time</span></h1>
                     
                     {/* STATS GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
                         <StatCard title="Leads Activos" value={stats?.summary.totalLeads || 0} icon={<Database className="text-wc-blue" />} />
                         <StatCard title="Seguimiento Vencido" value={stats?.summary.overdueFollowUps || 0} icon={<AlertCircle className={`animate-pulse ${stats?.summary.overdueFollowUps > 0 ? 'text-red-500' : 'text-slate-300'}`} />} />
                         <StatCard title="Alta Calidad" value={stats?.summary.highQualityLeads || 0} icon={<Zap className="text-wc-green" />} />
@@ -648,12 +655,12 @@ const MobileNavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode
 );
 
 const StatCard = ({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) => (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">{icon}</div>
+    <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-start mb-3 md:mb-4">
+            <div className="bg-slate-50 p-2 md:p-2.5 rounded-xl border border-slate-100">{icon}</div>
         </div>
-        <h4 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{title}</h4>
-        <p className="text-3xl font-black text-slate-900">{value}</p>
+        <h4 className="text-slate-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1">{title}</h4>
+        <p className="text-2xl md:text-3xl font-black text-slate-900">{value}</p>
     </div>
 );
 

@@ -209,37 +209,37 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
     return (
         <div className="flex flex-col h-full bg-[#f4f6f9] overflow-y-auto">
             {/* ── HEADER ── */}
-            <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-wc-gradient flex items-center justify-center shadow-md">
-                        <TrendingUp size={18} className="text-white" />
+            <div className="sticky top-[3.5rem] md:top-0 z-20 bg-white border-b border-slate-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-wc-gradient flex items-center justify-center shadow-md">
+                        <TrendingUp size={16} className="text-white md:w-[18px] md:h-[18px]" />
                     </div>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 leading-tight">CRM Sales Dashboard</h1>
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Gestión de Prospectos y Pipeline</p>
+                        <h1 className="text-sm md:text-base font-black text-slate-800 leading-tight">CRM Sales Dashboard</h1>
+                        <p className="text-[9px] md:text-[10px] font-semibold text-slate-400 uppercase tracking-widest hidden sm:block">Gestión de Prospectos y Pipeline</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-wc-gradient text-white px-4 py-2 rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95"
+                        className="bg-wc-gradient text-white px-3 md:px-4 py-1.5 md:py-2 rounded-xl text-[10px] md:text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center gap-1 md:gap-2 active:scale-95"
                     >
-                        <Plus size={14} /> Nuevo Prospecto
+                        <Plus size={14} /> <span className="hidden sm:inline">Nuevo Prospecto</span><span className="sm:hidden">Nuevo</span>
                     </button>
                 </div>
             </div>
 
-            <div className="p-5 flex flex-col h-full">
+            <div className="p-3 md:p-5 flex flex-col h-full">
                 {/* ── GESTIÓN DE PROSPECTOS ── */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     {/* Section header */}
-                    <div className="px-6 pt-5 pb-4 border-b border-slate-100">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="px-4 md:px-6 pt-4 md:pt-5 pb-3 md:pb-4 border-b border-slate-100">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
                             <div>
-                                <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
-                                    <Users size={18} className="text-wc-blue" /> Gestión de Prospectos
+                                <h3 className="text-sm md:text-base font-black text-slate-800 flex items-center gap-2">
+                                    <Users size={16} className="text-wc-blue md:w-[18px]" /> Gestión de Prospectos
                                 </h3>
-                                <p className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                                <p className="text-[10px] md:text-[11px] font-semibold text-slate-400 mt-0.5">
                                     {filteredLeads.length} prospecto{filteredLeads.length !== 1 ? 's' : ''} {activeFilter !== 'ALL' ? `en etapa "${STATUS_CONFIG[activeFilter]?.label}"` : 'en total'}
                                 </p>
                             </div>
@@ -257,10 +257,10 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                         </div>
 
                         {/* Stage filter tabs */}
-                        <div className="flex flex-wrap gap-2 mt-4">
+                        <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">
                             <button
                                 onClick={() => setActiveFilter('ALL')}
-                                className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all border ${activeFilter === 'ALL' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
+                                className={`px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-[11px] font-black transition-all border ${activeFilter === 'ALL' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
                             >
                                 Todos ({leads.length})
                             </button>
@@ -271,7 +271,7 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                                     <button
                                         key={s}
                                         onClick={() => setActiveFilter(s)}
-                                        className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all border flex items-center gap-1.5 ${activeFilter === s ? `${cfg.bg} ${cfg.color} ${cfg.border}` : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
+                                        className={`px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-[11px] font-black transition-all border flex items-center gap-1 md:gap-1.5 ${activeFilter === s ? `${cfg.bg} ${cfg.color} ${cfg.border}` : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
                                     >
                                         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                                         {cfg.label} ({cnt})

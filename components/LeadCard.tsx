@@ -82,7 +82,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
   return (
     <div 
       className={`
-        relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group flex flex-col justify-between h-full
+        relative p-3 md:p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group flex flex-col justify-between h-full
         ${selected 
           ? 'border-wc-blue bg-blue-50/50 shadow-md' 
           : 'border-slate-100 bg-white hover:border-wc-blue/30 hover:shadow-sm'
@@ -136,7 +136,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSelect, selected, on
             {selected && <CheckCircle className="text-wc-blue animate-in zoom-in" size={24} />}
         </div>
 
-        <div className="space-y-2.5 text-sm text-slate-600 mt-4">
+        <div className="space-y-1.5 md:space-y-2.5 text-sm text-slate-600 mt-3 md:mt-4">
             <div className="flex items-start gap-3">
             <MapPin size={16} className="text-wc-green shrink-0 mt-0.5" />
             <span className="truncate leading-tight text-xs">{lead.address}</span>

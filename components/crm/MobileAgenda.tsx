@@ -116,7 +116,7 @@ export const MobileAgenda = ({ isAdmin }: { isAdmin?: boolean }) => {
                 </div>
             </div>
 
-            <div className="p-4 flex flex-col gap-3">
+            <div className="p-3 md:p-4 flex flex-col gap-3">
                 {pendingTasks.map(task => (
                     <div 
                         key={task.id} 
