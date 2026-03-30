@@ -35,13 +35,38 @@ export const getDashboardMetrics = async (req, res) => {
     }
 };
 
+export const getTenantAgents = async (req, res) => {
+    try {
+        const { organizationId, role } = req.user;
+        
+        // Admins and owners can see all agents
+        if (role !== 'ACCOUNT_OWNER' && role !== 'SUPER_ADMIN') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const agents = await User.findAll({
+            where: { organizationId },
+            attributes: ['id', 'email', 'name', 'role'],
+            order: [['createdAt', 'ASC']]
+        });
+        
+        res.json(agents);
+    } catch (error) {
+        logger.error(`[CRM] Get Agents Error: ${error.message}`);
+        res.status(500).json({ error: 'Failed to fetch agents' });
+    }
+};
+
 export const getMyAgenda = async (req, res) => {
     try {
         const { organizationId, id, role } = req.user;
+        const { agentId } = req.query; // Admin can request specific agent's agenda
         
         let whereClause = { organizationId };
         if (role !== 'ACCOUNT_OWNER' && role !== 'SUPER_ADMIN') {
             whereClause.assignedTo = id; // Vendedor solo ve las suyas
+        } else if (agentId) {
+            whereClause.assignedTo = agentId; // Admin filtrando por un agente específico
         }
 
         const tasks = await CrmTask.findAll({

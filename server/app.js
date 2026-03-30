@@ -40,7 +40,7 @@ import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
 import { verifySuperAdmin } from './middleware/adminMiddleware.js';
 import { getAllOrganizations, getAllUsers, resetUserPassword, updateOrganization, adjustUserCredits, getGlobalSettings, updateGlobalSetting } from './controllers/superAdminController.js';
-import { getDashboardMetrics, getMyAgenda, createTask, updateTask, getBusinessProfile, updateBusinessProfile } from './controllers/crmController.js';
+import { getDashboardMetrics, getMyAgenda, createTask, updateTask, getBusinessProfile, updateBusinessProfile, getTenantAgents } from './controllers/crmController.js';
 import { 
     startWahaSession, getWahaSessionStatus, getWahaQr, stopWahaSession, 
     getAllWahaSessions, deleteWahaSessionAdmin 
@@ -237,6 +237,7 @@ app.put('/api/leads/:id', verifyToken, updateLead);
 app.delete('/api/leads/:id', verifyToken, deleteLead);
 
 app.get('/api/crm/organization-metrics', verifyToken, getDashboardMetrics);
+app.get('/api/crm/agents', verifyToken, getTenantAgents);
 app.get('/api/crm/my-agenda', verifyToken, getMyAgenda);
 app.post('/api/crm/tasks', verifyToken, createTask);
 app.put('/api/crm/tasks/:id', verifyToken, updateTask);

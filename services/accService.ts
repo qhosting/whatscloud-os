@@ -381,10 +381,22 @@ export const accService = {
     } catch (e) { throw e; }
   },
 
-  getMyAgenda: async () => {
+  getTenantAgents: async () => {
     try {
         const tokenAuth = localStorage.getItem('wc_auth_token');
-        const response = await fetch('/api/crm/my-agenda', {
+        const response = await fetch('/api/crm/agents', {
+            headers: { 'Authorization': `Bearer ${tokenAuth}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch CRM agents');
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
+  getMyAgenda: async (agentId?: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const url = agentId ? `/api/crm/my-agenda?agentId=${agentId}` : '/api/crm/my-agenda';
+        const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${tokenAuth}` }
         });
         if (!response.ok) throw new Error('Failed to fetch CRM agenda');

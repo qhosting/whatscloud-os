@@ -122,6 +122,11 @@ export const Organization = sequelize.define('Organization', {
     businessLocation: {
         type: DataTypes.STRING,
         allowNull: true,
+    },
+    aiTokensUsage: {
+        type: DataTypes.BIGINT,
+        defaultValue: 0,
+        allowNull: false
     }
 }, {
     timestamps: true,

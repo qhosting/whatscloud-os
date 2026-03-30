@@ -2,6 +2,7 @@ import { processAgentMessage } from '../services/agentService.js';
 import { BotConfig } from '../models/BotConfig.js'; // This is the Mongoose one for now
 import logger from '../config/logger.js';
 import { GoogleGenAI, Type } from "@google/genai";
+import { Organization } from '../models/index.js';
 
 let aiInstance = null;
 const getAI = () => {
@@ -80,6 +81,17 @@ export const suggestQueries = async (req, res) => {
         });
 
         const suggestions = JSON.parse(response.text || '[]');
+
+        // --- TOKEN USAGE TRACKING ---
+        if (response.usageMetadata && response.usageMetadata.totalTokenCount && req.user?.organizationId) {
+            const tokens = response.usageMetadata.totalTokenCount;
+            await Organization.increment('aiTokensUsage', { 
+                by: tokens, 
+                where: { id: req.user.organizationId } 
+            });
+            logger.info(`[AI-USAGE] Org ${req.user.organizationId} consumed ${tokens} tokens (Suggest)`);
+        }
+
         res.json(suggestions);
     } catch (error) {
         logger.error(`[AI-SUGGEST] Error: ${error.message}`);

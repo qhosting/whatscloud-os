@@ -224,6 +224,7 @@ export const AdminPanel: React.FC = () => {
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Plan</th>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Status</th>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Slug / ID</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Tokens Gemini</th>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Infra n8n</th>
                                         <th className="px-6 py-4"></th>
                                     </tr>
@@ -258,6 +259,13 @@ export const AdminPanel: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">{org.slug}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-1 px-2 bg-wc-purple/10 text-wc-purple rounded-lg font-black text-[11px] flex items-center gap-1">
+                                                        <Key size={10} /> {parseInt(org.aiTokensUsage || 0).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 {org.n8nWebhookUrl ? (
                                                     <span className="text-emerald-500 flex items-center gap-1 font-bold text-xs"><CheckCircle size={14} /> Linkeado</span>
@@ -548,8 +556,12 @@ export const AdminPanel: React.FC = () => {
                                     </div>
                                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                                         <div className="text-[10px] font-black text-slate-400 uppercase mb-1">IA Gemini API</div>
-                                        <div className="text-2xl font-black text-slate-900">Operativo</div>
-                                        <p className="text-[10px] text-purple-600 font-bold">Token Usage: Dynamic</p>
+                                        <div className="text-2xl font-black text-wc-purple">
+                                            {organizations.reduce((acc, o) => acc + parseInt(o.aiTokensUsage || 0), 0).toLocaleString()}
+                                        </div>
+                                        <p className="text-[10px] text-purple-600 font-bold flex items-center gap-1">
+                                            <TrendingUp size={8} /> Consumo Global de Tokens
+                                        </p>
                                     </div>
                                 </div>
                             </div>

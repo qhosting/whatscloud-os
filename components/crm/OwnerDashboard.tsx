@@ -130,38 +130,14 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
     const [activeFilter, setActiveFilter] = useState<LeadStatus | 'ALL'>('ALL');
     const [updatingLeadId, setUpdatingLeadId] = useState<string | null>(null);
 
-    // Top panels collapsed state
-    const [panelsCollapsed, setPanelsCollapsed] = useState(false);
-
-    // Business Profile State
-    const [businessProfile, setBusinessProfile] = useState({
-        businessNiche: '',
-        businessDescription: '',
-        businessLocation: ''
-    });
-    const [isSavingProfile, setIsSavingProfile] = useState(false);
-
     useEffect(() => { loadAll(); }, []);
     useEffect(() => { loadLeads(); }, [page, searchTerm]);
 
     const loadAll = async () => {
         try {
             setError(null);
-            const [metrics, leadsData, profileData] = await Promise.all([
-                accService.getCrmMetrics(),
-                accService.getLeads(page, 15, searchTerm),
-                accService.getBusinessProfile().catch(() => null)
-            ]);
-            setStats(metrics);
-            setLeads(leadsData.leads || []);
-            setTotalPages(leadsData.pages || 1);
-            if (profileData) {
-                setBusinessProfile({
-                    businessNiche: profileData.businessNiche || '',
-                    businessDescription: profileData.businessDescription || '',
-                    businessLocation: profileData.businessLocation || ''
-                });
-            }
+            // Ya no cargamos métricas globales aquí para optimizar vista
+            setStats({}); 
         } catch (e: any) {
             setError(e.message || 'Error de conexión');
         } finally {
@@ -195,25 +171,10 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
         try {
             await accService.updateLead(leadId, { status: newStatus });
             setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
-            // Refresh metrics silently
-            accService.getCrmMetrics().then(m => setStats(m)).catch(() => {});
         } catch (e: any) {
             alert('Error al actualizar estado: ' + e.message);
         } finally {
             setUpdatingLeadId(null);
-        }
-    };
-
-    const handleSaveProfile = async () => {
-        setIsSavingProfile(true);
-        try {
-            await accService.updateBusinessProfile(businessProfile);
-            if (onProfileUpdate) onProfileUpdate();
-            alert('Perfil guardado correctamente.');
-        } catch (e: any) {
-            alert('Error: ' + e.message);
-        } finally {
-            setIsSavingProfile(false);
         }
     };
 
@@ -232,31 +193,18 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
         </div>
     );
 
-    if (error || !stats) return (
+    if (error) return (
         <div className="flex flex-col h-full items-center justify-center p-8 text-center gap-4">
             <XCircle size={48} className="text-red-400" />
             <div>
-                <h3 className="text-xl font-bold text-slate-800">Error al cargar métricas</h3>
+                <h3 className="text-xl font-bold text-slate-800">Error al cargar listado</h3>
                 <p className="text-sm text-slate-500 mt-1">{error || 'Sin respuesta del servidor'}</p>
             </div>
-            <button onClick={loadAll} className="px-6 py-2 bg-wc-blue text-white rounded-lg font-bold shadow-md hover:bg-blue-600 transition-colors flex items-center gap-2">
+            <button onClick={loadLeads} className="px-6 py-2 bg-wc-blue text-white rounded-lg font-bold shadow-md hover:bg-blue-600 transition-colors flex items-center gap-2">
                 <RefreshCw size={14} /> Reintentar
             </button>
         </div>
     );
-
-    const { funnel, tasks } = stats;
-    const totalLeads = Object.values(funnel).reduce((a: any, b: any) => a + b, 0) as number;
-    const wonCount = funnel.WON || 0;
-    const conversionRate = totalLeads > 0 ? ((wonCount / totalLeads) * 100).toFixed(1) : '0';
-
-    // ─── KPI Cards data ───
-    const kpis = [
-        { icon: <Users size={20} />, label: 'Total Leads', value: totalLeads, color: 'text-wc-blue', bg: 'bg-blue-50' },
-        { icon: <PhoneCall size={20} />, label: 'Seguimientos', value: tasks.pending, color: 'text-amber-600', bg: 'bg-amber-50' },
-        { icon: <Award size={20} />, label: 'Win Rate', value: `${conversionRate}%`, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { icon: <XCircle size={20} />, label: 'Tareas Vencidas', value: tasks.overdue, color: 'text-red-600', bg: 'bg-red-50' },
-    ];
 
     return (
         <div className="flex flex-col h-full bg-[#f4f6f9] overflow-y-auto">
@@ -273,13 +221,6 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => setPanelsCollapsed(c => !c)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all"
-                    >
-                        {panelsCollapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-                        {panelsCollapsed ? 'Ver Métricas' : 'Ocultar Métricas'}
-                    </button>
-                    <button
                         onClick={() => setIsModalOpen(true)}
                         className="bg-wc-gradient text-white px-4 py-2 rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95"
                     >
@@ -288,94 +229,7 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
                 </div>
             </div>
 
-            <div className="p-5 flex flex-col gap-5">
-                {/* ── KPI CARDS ── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {kpis.map((kpi, i) => (
-                        <div key={i} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl ${kpi.bg} ${kpi.color} flex items-center justify-center flex-shrink-0`}>
-                                {kpi.icon}
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{kpi.label}</p>
-                                <p className="text-xl font-black text-slate-800">{kpi.value}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* ── COLLAPSIBLE TOP PANELS ── */}
-                {!panelsCollapsed && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        {/* Pipeline Funnel */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h3 className="text-sm font-black text-slate-800 mb-5 flex items-center gap-2">
-                                <PieChart className="text-wc-purple" size={18} /> Pipeline Funnel Actual
-                            </h3>
-                            <div className="flex flex-col gap-2.5">
-                                <FunnelStage label="Nuevos"      count={funnel.NEW || 0}       color="bg-blue-100 text-blue-700 border-blue-200"     max={totalLeads} />
-                                <FunnelStage label="Contactados" count={funnel.CONTACTED || 0}  color="bg-amber-100 text-amber-700 border-amber-200"   max={totalLeads} />
-                                <FunnelStage label="Cotizados"   count={funnel.QUOTED || 0}     color="bg-purple-100 text-purple-700 border-purple-200" max={totalLeads} />
-                                <FunnelStage label="Citas/Visitas"count={funnel.VISITED || 0}   color="bg-indigo-100 text-indigo-700 border-indigo-200" max={totalLeads} />
-                                <FunnelStage label="Ganados"     count={funnel.WON || 0}        color="bg-emerald-100 text-emerald-700 border-emerald-200" max={totalLeads} />
-                                <FunnelStage label="Perdidos"    count={funnel.LOST || 0}       color="bg-red-100 text-red-700 border-red-200"         max={totalLeads} />
-                            </div>
-                        </div>
-
-                        {/* Business Profile AI */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
-                            <div className="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-                            <div className="flex justify-between items-center mb-5">
-                                <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                                    <Bot className="text-wc-blue" size={18} /> Perfil Estratégico AI
-                                </h3>
-                                <button
-                                    onClick={handleSaveProfile}
-                                    disabled={isSavingProfile}
-                                    className="text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-black transition-all disabled:opacity-50"
-                                >
-                                    {isSavingProfile ? 'Guardando...' : 'Guardar Perfil'}
-                                </button>
-                            </div>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">¿De qué trata tu negocio? (Nicho)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ej: Mueblería de Lujo, Clínica Dental..."
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-bold"
-                                        value={businessProfile.businessNiche}
-                                        onChange={e => setBusinessProfile({ ...businessProfile, businessNiche: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Descripción / Objetivo de Venta</label>
-                                    <textarea
-                                        placeholder="Ej: Vendemos sofás minimalistas de alta gama para hogares premium..."
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-medium h-16 resize-none"
-                                        value={businessProfile.businessDescription}
-                                        onChange={e => setBusinessProfile({ ...businessProfile, businessDescription: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Ubicación Objetivo (Ciudad Base)</label>
-                                    <div className="relative">
-                                        <Landmark size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: CDMX, Monterrey, Querétaro..."
-                                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-wc-blue transition-all font-bold"
-                                            value={businessProfile.businessLocation}
-                                            onChange={e => setBusinessProfile({ ...businessProfile, businessLocation: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-[10px] text-slate-400 italic">* Usado por WhatsCloud AI para el Lead Scrapper inteligente.</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
+            <div className="p-5 flex flex-col h-full">
                 {/* ── GESTIÓN DE PROSPECTOS ── */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     {/* Section header */}
@@ -540,6 +394,7 @@ export const OwnerDashboard: React.FC<{ onProfileUpdate?: () => void }> = ({ onP
 
             <NewLeadModal
                 isOpen={isModalOpen}
+                isAdmin={true}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => { loadLeads(); loadAll(); }}
             />

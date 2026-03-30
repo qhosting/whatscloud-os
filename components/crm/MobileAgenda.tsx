@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, AlertCircle, Phone, MessageSquare, MapPin, Plus } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, AlertCircle, Phone, MessageSquare, MapPin, Plus, User, Filter, RefreshCw } from 'lucide-react';
 import { accService } from '../../services/accService';
 import { NewLeadModal } from './NewLeadModal';
 
@@ -13,25 +13,46 @@ interface CrmTask {
     agent: { name: string };
 }
 
-export const MobileAgenda = () => {
+export const MobileAgenda = ({ isAdmin }: { isAdmin?: boolean }) => {
     const [tasks, setTasks] = useState<CrmTask[]>([]);
+    const [agents, setAgents] = useState<any[]>([]);
+    const [selectedAgentId, setSelectedAgentId] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    const [loadingTasks, setLoadingTasks] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
+        if (isAdmin) {
+            loadAgents();
+        }
         loadAgenda();
-    }, []);
+    }, [isAdmin]);
 
-    const loadAgenda = async () => {
+    const loadAgents = async () => {
         try {
-            setLoading(true);
-            const data = await accService.getMyAgenda();
-            setTasks(data);
+            const data = await accService.getTenantAgents();
+            setAgents(data || []);
         } catch (e) {
-            console.error(e);
+            console.error("[AGENDA] Agents Load Error:", e);
+        }
+    };
+
+    const loadAgenda = async (agentId?: string) => {
+        try {
+            setLoadingTasks(true);
+            const data = await accService.getMyAgenda(agentId);
+            setTasks(data || []);
+        } catch (e) {
+            console.error("[AGENDA] Load Error:", e);
         } finally {
             setLoading(false);
+            setLoadingTasks(false);
         }
+    };
+
+    const handleAgentChange = (id: string) => {
+        setSelectedAgentId(id);
+        loadAgenda(id);
     };
 
     const handleComplete = async (taskId: string) => {
@@ -63,13 +84,36 @@ export const MobileAgenda = () => {
 
     return (
         <div className="flex flex-col h-full bg-slate-50 overflow-y-auto pb-24 md:pb-6">
-            <div className="bg-white p-4 border-b border-slate-200 sticky top-0 z-10">
-                <h1 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                    <Calendar className="text-wc-blue" /> Mi Agenda
-                </h1>
-                <p className="text-xs font-medium text-slate-500 mt-1">
-                    Tienes {pendingTasks.length} seguimientos pendientes
-                </p>
+            <div className="bg-white p-4 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <Calendar className="text-wc-blue" /> {isAdmin ? 'Seguimiento de Equipo' : 'Mi Agenda'}
+                        </h1>
+                        <p className="text-xs font-medium text-slate-500 mt-1">
+                            {loadingTasks ? 'Cargando tareas...' : `Hay ${pendingTasks.length} seguimientos pendientes`}
+                        </p>
+                    </div>
+                    {isAdmin && (
+                        <div className="flex flex-col items-end gap-1">
+                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Filtrar por Vendedor</label>
+                            <div className="relative">
+                                <User size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <select 
+                                    value={selectedAgentId}
+                                    onChange={(e) => handleAgentChange(e.target.value)}
+                                    className="pl-7 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-wc-blue appearance-none transition-all cursor-pointer"
+                                >
+                                    <option value="">Todos los Agentes</option>
+                                    {agents.map(a => (
+                                        <option key={a.id} value={a.id}>{a.name}</option>
+                                    ))}
+                                </select>
+                                <Filter size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="p-4 flex flex-col gap-3">

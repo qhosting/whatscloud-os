@@ -4,20 +4,29 @@ import { accService } from '../../services/accService';
 
 interface NewLeadModalProps {
     isOpen: boolean;
+    isAdmin?: boolean;
     onClose: () => void;
     onSuccess: (lead: any) => void;
 }
 
-export const NewLeadModal: React.FC<NewLeadModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const NewLeadModal: React.FC<NewLeadModalProps> = ({ isOpen, isAdmin, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
         businessName: '',
         phone: '',
         niche: '',
-        notes: ''
+        notes: '',
+        assignedTo: ''
     });
+    const [agents, setAgents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+
+    React.useEffect(() => {
+        if (isOpen && isAdmin) {
+            accService.getTenantAgents().then(setAgents).catch(console.error);
+        }
+    }, [isOpen, isAdmin]);
 
     if (!isOpen) return null;
 
@@ -35,13 +44,14 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ isOpen, onClose, onS
             setSuccess(true);
             
             // Auto schedule initial task optionally? No, we just insert the lead.
-            // But usually salespeople want an immediate task.
+            // Pero asignamos la tarea al agente seleccionado si es Admin
             await accService.createCrmTask({
                 title: 'Primer Contacto (Manual)',
                 leadId: newLead.id,
                 dueDate: new Date().toISOString(),
                 type: 'CALL',
-                priority: 'HIGH'
+                priority: 'HIGH',
+                assignedTo: formData.assignedTo || undefined
             });
 
             setTimeout(() => {
@@ -141,11 +151,27 @@ export const NewLeadModal: React.FC<NewLeadModalProps> = ({ isOpen, onClose, onS
                                         value={formData.notes}
                                         onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                         className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-wc-blue focus:ring-2 focus:ring-wc-blue/20 outline-none text-sm transition-all bg-slate-50 focus:bg-white resize-none"
-                                        rows={3}
+                                        rows={2}
                                         placeholder="Comentarios adicionales..."
                                     />
                                 </div>
                             </div>
+
+                            {isAdmin && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Asignar a Vendedor</label>
+                                    <select 
+                                        value={formData.assignedTo}
+                                        onChange={(e) => setFormData({...formData, assignedTo: e.target.value})}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-wc-blue focus:ring-2 focus:ring-wc-blue/20 outline-none text-sm transition-all bg-slate-50 focus:bg-white font-bold"
+                                    >
+                                        <option value="">Yo mismo (Actual)</option>
+                                        {agents.map(a => (
+                                            <option key={a.id} value={a.id}>{a.name} ({a.email})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="mt-4 flex gap-3">
                                 <button

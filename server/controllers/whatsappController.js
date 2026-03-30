@@ -4,6 +4,8 @@ import {
     Conversation, 
     Message, 
     Lead, 
+    Message, 
+    Lead, 
     AIPersona,
     Organization,
     Product,
@@ -123,6 +125,22 @@ export const handleIncomingMessage = async (req, res) => {
 
         // 5. Handle AI Auto-Reply if enabled
         if (connection.aiEnabled) {
+            // --- AUTOMATION: 10-Min Auto-Resume ---
+            const tenMinutesInMs = 10 * 60 * 1000;
+            const isManualStatus = conversation.status === 'MANUAL';
+            const agentInactiveTime = conversation.lastAgentActiveAt ? Date.now() - new Date(conversation.lastAgentActiveAt).getTime() : Infinity;
+
+            if (isManualStatus && agentInactiveTime < tenMinutesInMs) {
+                logger.info(`[WHATSAPP] AI Paused for ${senderPhone} (Manual intervention active)`);
+                return;
+            }
+
+            // If it was manual but timeout hit, reactivate bot
+            if (isManualStatus && agentInactiveTime >= tenMinutesInMs) {
+                logger.info(`[WHATSAPP] AI Resuming for ${senderPhone} after 10 min inactivity`);
+                await conversation.update({ status: 'BOT_HANDLED' });
+            }
+
             const aiPersona = await AIPersona.findOne({
                 where: { organizationId: orgId, isActive: true }
             });
@@ -171,25 +189,43 @@ const handleAIReply = async (aiInstance, persona, conversation, userMessage, pho
 
         const historyContext = history.reverse().map(m => `${m.sender}: ${m.content}`).join('\n');
 
+        const actionContext = persona.actions?.length > 0 
+            ? `\nTIENES DISPONIBLES ESTAS ACCIONES MULTIMEDIA: 
+               ${persona.actions.map(a => `- ${a.name}: usa el código EXACTO ${a.triggerCode}`).join('\n')}
+               Si el usuario necesita algo de esto, escribe el código AL FINAL de tu respuesta.`
+            : '';
+
         const prompt = `
             [System Configuration]
             Eres un asistente virtual llamado ${persona.name}.
             ${persona.systemPrompt}
             ${catalogContext}
+            ${actionContext}
             
             [Historial de Conversación]
             ${historyContext}
             
             [Instrucción]
             Responde de manera natural y concisa basándote en el historial y tus instrucciones del sistema.
+            Responde SIEMPRE en Español.
         `;
 
         const response = await aiInstance.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt
         });
 
         const aiReply = response.text || "Lo siento, estoy teniendo problemas técnicos.";
+
+        // --- TOKEN USAGE TRACKING ---
+        if (response.usageMetadata && response.usageMetadata.totalTokenCount) {
+            const tokens = response.usageMetadata.totalTokenCount;
+            await Organization.increment('aiTokensUsage', { 
+                by: tokens, 
+                where: { id: organizationId } 
+            });
+            logger.info(`[AI-USAGE] Org ${organizationId} consumed ${tokens} tokens (WhatsApp)`);
+        }
 
         // --- BILLING: Check Quota before sending ---
         const quota = await checkAndDeductQuota(organizationId, 'waMessages', 1);
@@ -330,7 +366,8 @@ export const sendManualMessage = async (req, res) => {
 
         await conversation.update({ 
             lastMessageAt: new Date(),
-            status: 'OPEN' // Force open if bot had it
+            lastAgentActiveAt: new Date(),
+            status: 'MANUAL' // Force manual if bot had it
         });
 
         res.json(savedMessage);

@@ -20,8 +20,12 @@ export const Conversation = sequelize.define('Conversation', {
         allowNull: true
     },
     status: {
-        type: DataTypes.ENUM('OPEN', 'SNOOZED', 'CLOSED', 'BOT_HANDLED'),
+        type: DataTypes.ENUM('OPEN', 'SNOOZED', 'CLOSED', 'BOT_HANDLED', 'MANUAL'),
         defaultValue: 'BOT_HANDLED'
+    },
+    lastAgentActiveAt: {
+        type: DataTypes.DATE,
+        allowNull: true
     },
     lastMessageAt: {
         type: DataTypes.DATE,
