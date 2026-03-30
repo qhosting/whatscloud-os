@@ -319,6 +319,7 @@ export const accService = {
         const response = await fetch('/api/admin/organizations', {
             headers: { 'Authorization': `Bearer ${tokenAuth}` }
         });
+        if (!response.ok) throw new Error('Failed to fetch organizations');
         return await response.json();
     } catch (e) { return []; }
   },
@@ -329,6 +330,7 @@ export const accService = {
         const response = await fetch('/api/admin/users', {
             headers: { 'Authorization': `Bearer ${tokenAuth}` }
         });
+        if (!response.ok) throw new Error('Failed to fetch users');
         return await response.json();
     } catch (e) { return []; }
   },
