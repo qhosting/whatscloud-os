@@ -1,6 +1,7 @@
 import { Organization, User, CreditTransaction, GlobalSetting } from '../models/index.js';
 import { sequelize } from '../config/database.js';
 import logger from '../config/logger.js';
+import bcrypt from 'bcryptjs';
 
 // GET ALL ORGANIZATIONS (TENANTS)
 // ... (previous functions)
@@ -57,6 +58,34 @@ export const getAllUsers = async (req, res) => {
     } catch (e) {
         logger.error(`[SUPER-ADMIN] List Users Error: ${e.message}`);
         res.status(500).json({ error: e.message });
+    }
+};
+
+// UPDATE USER PASSWORD (SUPER ADMIN POWER)
+export const resetUserPassword = async (req, res) => {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    try {
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(newPassword, salt);
+
+        await user.update({ password_hash });
+
+        logger.info(`[SUPER-ADMIN] Password reset for user ${user.email} (ID: ${user.id})`);
+        res.json({ message: 'Password reset successfully' });
+    } catch (e) {
+        logger.error(`[SUPER-ADMIN] Reset Password Error for ${id}: ${e.message}`);
+        res.status(500).json({ error: 'Internal server error while resetting password' });
     }
 };
 

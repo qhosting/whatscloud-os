@@ -39,7 +39,7 @@ import { getBotConfig, updateBotConfig } from './controllers/botController.js';
 import { createSmsCampaign } from './controllers/smsController.js';
 import { getStats } from './controllers/dashboardController.js';
 import { verifySuperAdmin } from './middleware/adminMiddleware.js';
-import { getAllOrganizations, getAllUsers, updateOrganization, adjustUserCredits, getGlobalSettings, updateGlobalSetting } from './controllers/superAdminController.js';
+import { getAllOrganizations, getAllUsers, resetUserPassword, updateOrganization, adjustUserCredits, getGlobalSettings, updateGlobalSetting } from './controllers/superAdminController.js';
 import { getDashboardMetrics, getMyAgenda, createTask, updateTask, getBusinessProfile, updateBusinessProfile } from './controllers/crmController.js';
 import { 
     startWahaSession, getWahaSessionStatus, getWahaQr, stopWahaSession, 
@@ -405,6 +405,7 @@ app.post('/api/bot/config', verifyToken, updateBotConfig);
 app.get('/api/admin/organizations', verifyToken, verifySuperAdmin, getAllOrganizations);
 app.put('/api/admin/organizations/:id', verifyToken, verifySuperAdmin, updateOrganization);
 app.get('/api/admin/users', verifyToken, verifySuperAdmin, getAllUsers);
+app.post('/api/admin/users/:id/password', verifyToken, verifySuperAdmin, resetUserPassword);
 app.post('/api/admin/credits/adjust', verifyToken, verifySuperAdmin, adjustUserCredits);
 app.get('/api/admin/settings', verifyToken, verifySuperAdmin, getGlobalSettings);
 app.post('/api/admin/settings', verifyToken, verifySuperAdmin, updateGlobalSetting);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { accService } from '../services/accService';
-import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone, Activity, Globe, Loader2 } from 'lucide-react';
+import { Building2, Users, Shield, TrendingUp, DollarSign, Settings, Search, CheckCircle, XCircle, MoreVertical, CreditCard, Zap, Smartphone, Activity, Globe, Loader2, Key } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
@@ -59,6 +59,22 @@ export const AdminPanel: React.FC = () => {
             loadData(); // Reload to see changes
         } catch (e) {
             alert("Error al ajustar créditos");
+        }
+    };
+
+    const handleResetPassword = async (userId: string, email: string) => {
+        const newPassword = prompt(`Por favor ingresa la nueva contraseña para ${email}:\n\nRequiere mínimo 6 caracteres.`);
+        if (!newPassword) return;
+        
+        if (newPassword.length < 6) {
+            return alert("La contraseña debe tener al menos 6 caracteres.");
+        }
+
+        try {
+            await accService.adminResetUserPassword(userId, newPassword);
+            alert(`Contraseña para ${email} cambiada exitosamente.`);
+        } catch (e: any) {
+            alert(`Error al cambiar contraseña: ${e.message}`);
         }
     };
 
@@ -309,12 +325,21 @@ export const AdminPanel: React.FC = () => {
                                                 {user.organization?.name || 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button 
-                                                    onClick={() => handleAdjustCredits(user.id)}
-                                                    className="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-bold shadow-sm shadow-emerald-500/10 flex items-center gap-2 ml-auto"
-                                                >
-                                                    <DollarSign size={14} /> Ajustar Créditos
-                                                </button>
+                                                <div className="flex flex-col md:flex-row items-end justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => handleResetPassword(user.id, user.email)}
+                                                        className="bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-all px-3 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2"
+                                                        title="Cambiar Contraseña"
+                                                    >
+                                                        <Key size={14} /> Password
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleAdjustCredits(user.id)}
+                                                        className="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-bold shadow-sm shadow-emerald-500/10 flex items-center gap-2"
+                                                    >
+                                                        <DollarSign size={14} /> Ajustar Créditos
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

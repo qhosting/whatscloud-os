@@ -350,6 +350,25 @@ export const accService = {
     } catch (e) { throw e; }
   },
 
+  adminResetUserPassword: async (userId: string, newPassword: string) => {
+    try {
+        const tokenAuth = localStorage.getItem('wc_auth_token');
+        const response = await fetch(`/api/admin/users/${userId}/password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenAuth}`
+            },
+            body: JSON.stringify({ newPassword })
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to update password');
+        }
+        return await response.json();
+    } catch (e) { throw e; }
+  },
+
   // --- CRM TRACKER METHODS ---
   getCrmMetrics: async () => {
     try {
