@@ -12,6 +12,7 @@ import logger from './config/logger.js';
 import { sequelize, connectMongo, connectRedis, redisClient } from './config/database.js';
 import { login, register } from './controllers/authController.js';
 import { verifyToken } from './middleware/authMiddleware.js';
+import * as notificationController from './controllers/notificationController.js';
 
 // Import Integration Controllers
 import { 
@@ -241,6 +242,10 @@ app.get('/api/crm/agents', verifyToken, getTenantAgents);
 app.get('/api/crm/my-agenda', verifyToken, getMyAgenda);
 app.post('/api/crm/tasks', verifyToken, createTask);
 app.put('/api/crm/tasks/:id', verifyToken, updateTask);
+
+// --- NOTIFICATION ROUTES ---
+app.post('/api/notifications/subscribe', verifyToken, notificationController.subscribe);
+app.post('/api/notifications/test', verifyToken, notificationController.sendTestNotification);
 
 // Business Profile Routes
 app.get('/api/crm/business-profile', verifyToken, getBusinessProfile);

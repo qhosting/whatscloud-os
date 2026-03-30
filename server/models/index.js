@@ -19,6 +19,7 @@ import { OrderItem } from './OrderItem.js';
 import { CrmTask } from './CrmTask.js';
 import { SubscriptionPlan } from './SubscriptionPlan.js';
 import { GlobalSetting } from './GlobalSetting.js';
+import { PushSubscription } from './PushSubscription.js';
 
 // Relations
 Organization.belongsTo(SubscriptionPlan, { foreignKey: 'subscriptionPlanId', as: 'subscriptionPlan' });
@@ -108,6 +109,9 @@ CrmTask.belongsTo(User, { foreignKey: 'assignedTo', as: 'agent' });
 Lead.hasMany(CrmTask, { foreignKey: 'leadId', as: 'tasks' });
 CrmTask.belongsTo(Lead, { foreignKey: 'leadId' });
 
+User.hasMany(PushSubscription, { foreignKey: 'userId', as: 'pushSubscriptions' });
+PushSubscription.belongsTo(User, { foreignKey: 'userId' });
+
 export {
     User,
     Organization,
@@ -127,6 +131,7 @@ export {
     OrderItem,
     CrmTask,
     SubscriptionPlan,
-    GlobalSetting
+    GlobalSetting,
+    PushSubscription
 };
 

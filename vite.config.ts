@@ -20,7 +20,11 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         VitePWA({
-          registerType: 'autoUpdate',
+          strategies: 'injectManifest',
+          srcDir: 'public',
+          filename: 'sw.js',
+          registerType: 'autoUpdate', 
+          injectRegister: 'auto',
           includeAssets: ['logo.png', 'robots.txt', 'apple-touch-icon.png'],
           manifest: {
             name: 'WhatsCloud OS',

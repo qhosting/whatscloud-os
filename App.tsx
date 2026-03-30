@@ -20,6 +20,7 @@ import { LandingPage } from './components/LandingPage';
 import { InboxModule } from './components/InboxModule';
 import { CommerceModule } from './components/CommerceModule';
 import { SalesTrackerModule } from './components/crm/SalesTrackerModule';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 import { 
   CreditCard, Database, Bot, Loader2, Cloud, Search, MessageSquare, MessageCircle, Settings, X, Shield, Radio, Zap, Hexagon, Activity, PhoneCall, Server, Network, Menu, Wallet, AlertCircle, Clock, ShoppingBag, Calendar
@@ -29,6 +30,7 @@ type ModuleType = 'Dashboard' | 'LeadScrapper' | 'BotBuilder' | 'SMSReminder' | 
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<ACCProfile | null>(null);
+  const { subscribeUser } = usePushNotifications();
   const [activeModule, setActiveModule] = useState<ModuleType>('Dashboard');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -72,6 +74,7 @@ const App: React.FC = () => {
       accService.getDashboardStats().then(setStats);
       accService.getBusinessProfile().then(setBusinessProfile);
       fetchLeads();
+      subscribeUser(); // Auto-subscribe for PWA/Web notifications
     }
   }, [profile]);
 
